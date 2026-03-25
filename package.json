@@ -1,0 +1,9 @@
+{
+  "name": "gpt-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix my-app",
+    "build": "npm run build --prefix my-app",
+    "preview": "npm run preview --prefix my-app"
+  }
+}

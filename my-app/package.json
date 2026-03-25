@@ -4,15 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "kill-port 5181",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.62.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -25,6 +28,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "kill-port": "^2.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "typescript-eslint": "^8.18.0",

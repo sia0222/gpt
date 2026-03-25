@@ -1,13 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+  /* 관리자 대시보드 공통 토큰 (라이트 고정) */
+  --dash-canvas: #f6f8fc;
+  --dash-foreground: #18181b;
+  --dash-muted: #71717a;
+  --dash-subtle: #a1a1aa;
+  --dash-surface: #ffffff;
+  --dash-border: #e4e4e7;
+  --dash-text-base: 0.9375rem;
+  --dash-leading: 1.55;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-dash-canvas: var(--dash-canvas);
+  --color-dash-foreground: var(--dash-foreground);
+  --color-dash-muted: var(--dash-muted);
+  --color-dash-subtle: var(--dash-subtle);
+  --color-dash-surface: var(--dash-surface);
+  --color-dash-border: var(--dash-border);
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -17,14 +32,18 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #fafafa;
   }
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
+}
+
+#root {
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {
@@ -32,4 +51,66 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* 관리 콘솔 캔버스 (애널리틱스/스튜디오 계열 밀도) */
+.dash-app {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-size: var(--dash-text-base);
+  line-height: var(--dash-leading);
+  color: var(--dash-foreground);
+}
+
+.dash-card {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--dash-border) 85%, transparent);
+  background-color: var(--dash-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+/* Skip link (STANDARD_PUBLISHING) */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0 0 0.25rem 0;
+  transition: top 0.15s ease-out;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
