@@ -1,0 +1,481 @@
+---
+description: "범용표준: 프로세스 및 운영 (STANDARD_PROCESS)"
+alwaysApply: true
+---
+
+# 범용표준: 프로세스 및 운영 (STANDARD_PROCESS)
+
+---
+
+# [DOCUMENT_TYPE] ROOT_AGENT
+# [VERSION] 1.0.0
+
+## 1. 역할 정의
+이 에이전트는 기술 프로젝트 매니저(TPM)로서 다음을 총괄합니다:
+- 기획, 프론트엔드, 백엔드 개발 감독
+- 에이전트 간 의존성 관리
+- 품질 보증 및 의사결정 기록
+
+## 2. 관할 범위
+- 프로젝트 전반의 비전과 아키텍처
+- 작업 분해 및 위임
+- 서브 에이전트(React, Java) 간 조율
+- 프로젝트 전체의 일관성 보장
+
+## 3. 협업 규칙
+- 기능 구현 전에 Swagger 등 API 명세를 먼저 확정한다.
+- 각 서브 에이전트의 아키텍처 문서를 사전에 참조한다.
+- 프론트엔드와 백엔드의 요청/응답 계약을 Root Agent가 최종 승인한다.
+
+## 4. 권한 경계
+- Root Agent는 직접 코드를 구현하지 않는다.
+- 모든 구현 작업은 서브 에이전트에 위임한다.
+- 서브 에이전트의 출력이 일관성에 어긋나면 수정을 요청할 수 있다.
+
+## 5. 참조 문서
+- Architecture_Standard.md (아키텍처 표준)
+- Backend_Standard.md (백엔드 표준)
+- Database_Standard.md (데이터베이스 표준)
+- Frontend_Architecture.md (프론트엔드 아키텍처)
+
+
+---
+
+# 로깅 및 모니터링 표준 (Logging Standard)
+
+## 1. 로그 레벨 사용 기준
+
+| 레벨 | 용도 | 운영환경 | 예시 |
+|------|------|---------|------|
+| **ERROR** | 시스템 장애, 즉시 대응 필요 | 활성 | DB 연결 실패, 외부 API 호출 실패, 예상치 못한 예외 |
+| **WARN** | 비정상이지만 시스템은 동작 | 활성 | 재시도 성공, 임계값 근접, 유효성 검사 실패 |
+| **INFO** | 주요 비즈니스 이벤트 | 활성 | 로그인/로그아웃, 상태 변경, 결재 승인 |
+| **DEBUG** | 개발/디버깅 상세 정보 | **비활성** | 메소드 진입/반환, 파라미터 값, SQL 파라미터 |
+| **TRACE** | 최하위 상세 추적 | **비활성** | 루프 내부 값, 바이트 레벨 데이터 |
+
+### 절대 금지 사항
+- ERROR 레벨에 비즈니스 로직 오류를 기록하지 않는다 (예: 비밀번호 불일치는 WARN)
+- catch 블록에서 예외를 삼키고(swallow) 로그를 남기지 않는 것을 금지한다
+- `e.printStackTrace()` 사용을 금지한다 -> `log.error("메시지", e)` 사용
+
+---
+
+## 2. 로그 포맷 표준
+
+### 2.1 기본 포맷
+```
+{timestamp} [{level}] [{traceId}] [{userId}] {logger} - {message}
+```
+
+### 2.2 Logback 설정 (logback-spring.xml)
+```xml
+<pattern>
+  %d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%X{traceId}] [%X{userId}] %logger{36} - %msg%n
+</pattern>
+```
+
+### 2.3 MDC (Mapped Diagnostic Context) 필수 항목
+| MDC Key | 설명 | 설정 시점 |
+|---------|------|----------|
+| traceId | 요청 추적 ID (UUID) | Filter/Interceptor 진입 시 |
+| userId | 현재 사용자 ID | 인증 완료 후 |
+| clientIp | 클라이언트 IP | Filter 진입 시 |
+
+```java
+@Component
+public class MdcFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, ...) {
+        MDC.put("traceId", UUID.randomUUID().toString().substring(0, 8));
+        MDC.put("clientIp", request.getRemoteAddr());
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.clear();
+        }
+    }
+}
+```
+
+---
+
+## 3. 비즈니스 감사 로그 (Audit Log)
+
+### 3.1 기록 대상
+모든 데이터 변경(CUD) 작업에 대해 감사 로그를 남긴다.
+
+| 항목 | 컬럼 | 설명 |
+|------|------|------|
+| 누가 | actor_id | 작업 수행자 ID |
+| 언제 | action_at | 작업 시각 (timestamp) |
+| 무엇을 | target_type, target_id | 대상 엔티티 유형 및 ID |
+| 어떻게 | action_type | CREATE / UPDATE / DELETE |
+| 변경 내용 | before_data, after_data | 변경 전/후 JSON (JSONB) |
+| 사유 | description | 변경 사유 (선택) |
+
+### 3.2 감사 로그 테이블 (DDL)
+```sql
+CREATE TABLE th_audit_log (
+    audit_id        BIGSERIAL PRIMARY KEY,
+    actor_id        VARCHAR(50) NOT NULL,
+    action_type     VARCHAR(20) NOT NULL,  -- CREATE, UPDATE, DELETE
+    target_type     VARCHAR(50) NOT NULL,  -- TICKET, USER, PROJECT 등
+    target_id       VARCHAR(36) NOT NULL,
+    before_data     JSONB,
+    after_data      JSONB,
+    description     VARCHAR(500),
+    client_ip       VARCHAR(45),
+    action_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 3.3 자동 감사 로그 방식
+- JPA `@EntityListeners` + `AuditingEntityListener` 활용
+- 또는 AOP를 통해 Service 계층에서 자동 기록
+- 대량 배치 작업은 건별 기록 대신 요약 기록 허용
+
+---
+
+## 4. 로그 보관 정책
+
+| 환경 | 보관 기간 | 로테이션 | 최대 크기 |
+|------|----------|---------|----------|
+| 개발 | 7일 | 일별 | 1GB |
+| 스테이징 | 30일 | 일별 | 5GB |
+| 운영 | 90일 (감사로그: 5년) | 일별 | 10GB |
+
+### Logback 로테이션 설정
+```xml
+<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+        <maxHistory>90</maxHistory>
+        <totalSizeCap>10GB</totalSizeCap>
+    </rollingPolicy>
+</appender>
+```
+
+---
+
+## 5. 환경별 로그 레벨 설정
+
+```yaml
+# application-dev.yml
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# application-prod.yml
+logging:
+  level:
+    root: WARN
+    com.example: INFO
+    org.hibernate.SQL: WARN
+```
+
+
+---
+
+# 테스트 전략 (Test Strategy)
+
+## 1. 테스트 레벨별 범위
+
+### 1.1 테스트 피라미드
+```
+            /  E2E  \           ← 적게, 핵심 시나리오만
+           /  통합    \          ← API 엔드포인트 중심
+          / 단위 테스트 \         ← 가장 많이, 빠르게
+```
+
+### 1.2 레벨별 정의
+
+| 레벨 | 대상 | 커버리지 목표 | 실행 시점 |
+|------|------|-------------|----------|
+| 단위 테스트 | Service, Policy, Util, Validator | 70% 이상 | 커밋 시 (pre-commit hook) |
+| 통합 테스트 | Controller + Service + Repository | 주요 API 시나리오 | PR 생성 시 (CI) |
+| E2E 테스트 | 핵심 업무 흐름 전체 | 핵심 3~5개 시나리오 | 릴리스 전 (수동 또는 CI) |
+
+---
+
+## 2. 단위 테스트 규칙
+
+### 2.1 테스트 클래스 네이밍
+```java
+// 대상 클래스명 + Test
+TicketServiceTest.java
+TicketValidatorTest.java
+MaskingUtilsTest.java
+```
+
+### 2.2 테스트 메소드 네이밍
+```java
+// 한국어 메소드명 허용 (가독성 우선)
+@Test
+void 티켓_상태가_WAITING이면_ACCEPTED로_변경_가능하다() { }
+
+@Test
+void 권한이_없는_사용자는_티켓을_삭제할_수_없다() { }
+
+// 또는 영어 패턴: should_결과_when_조건
+@Test
+void should_changeToAccepted_when_statusIsWaiting() { }
+```
+
+### 2.3 테스트 구조 (AAA 패턴)
+```java
+@Test
+void 정상_티켓_등록() {
+    // Arrange (준비)
+    TicketCreateDto dto = createTestDto();
+
+    // Act (실행)
+    TicketDetailDto result = ticketService.createTicket(dto);
+
+    // Assert (검증)
+    assertThat(result.getStatus()).isEqualTo(TicketStatus.WAITING);
+    assertThat(result.getTitle()).isEqualTo(dto.getTitle());
+}
+```
+
+### 2.4 테스트하지 않는 대상
+- 단순 Getter/Setter (Lombok 생성)
+- JPA Repository 기본 메소드 (findById, save 등)
+- Controller의 단순 위임 로직 (통합 테스트로 대체)
+
+---
+
+## 3. 통합 테스트 규칙
+
+### 3.1 API 통합 테스트 구성
+```java
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+@Transactional  // 테스트 후 자동 롤백
+class TicketApiIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void 티켓_등록_API_정상_동작() throws Exception {
+        mockMvc.perform(post("/api/v1/tickets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success").value(true));
+    }
+}
+```
+
+### 3.2 필수 통합 테스트 시나리오
+- 정상 등록/조회/수정/삭제 (Happy Path)
+- 유효성 검사 실패 시 400 응답
+- 인증 없이 접근 시 401 응답
+- 권한 없는 접근 시 403 응답
+- 존재하지 않는 리소스 접근 시 404 응답
+
+---
+
+## 4. 테스트 데이터 관리
+
+### 4.1 테스트 데이터 생성 패턴
+```java
+// Factory 메소드 패턴
+public class TestDataFactory {
+
+    public static TicketCreateDto createTicketDto() {
+        return TicketCreateDto.builder()
+            .title("테스트 티켓")
+            .content("테스트 내용")
+            .priority(Priority.NORMAL)
+            .build();
+    }
+
+    public static User createStaffUser() {
+        return User.builder()
+            .userId("testStaff")
+            .userName("테스트직원")
+            .role(Role.STAFF)
+            .build();
+    }
+}
+```
+
+### 4.2 규칙
+- 테스트 데이터는 `src/test/java` 하위에 `fixture` 또는 `factory` 패키지로 관리
+- 외부 시스템(DB, API)에 의존하는 테스트는 Mock을 사용
+- `@Sql` 어노테이션으로 테스트용 초기 데이터를 로드할 수 있음
+
+---
+
+## 5. Mock 사용 기준
+
+| 상황 | Mock 사용 여부 | 이유 |
+|------|-------------|------|
+| 외부 API 호출 (FCM, SMS) | O | 외부 의존성 제거 |
+| 현재 시각 (`LocalDateTime.now()`) | O | 시간 의존 로직 테스트 안정성 |
+| Repository (단위 테스트) | O | DB 의존 없이 Service 로직만 검증 |
+| Repository (통합 테스트) | X | 실제 DB와의 동작 검증 필요 |
+| Service 간 호출 | 상황에 따라 | 독립 테스트면 Mock, 통합 검증이면 실제 |
+
+```java
+// Mockito 사용 예시
+@ExtendWith(MockitoExtension.class)
+class TicketServiceTest {
+
+    @Mock
+    private TicketRepository ticketRepository;
+
+    @InjectMocks
+    private TicketServiceImpl ticketService;
+
+    @Test
+    void 티켓_조회_성공() {
+        given(ticketRepository.findById(anyLong()))
+            .willReturn(Optional.of(createTestTicket()));
+
+        TicketDetailDto result = ticketService.getTicket(1L);
+
+        assertThat(result).isNotNull();
+    }
+}
+```
+
+
+---
+
+# 성능 기준 (Performance Criteria)
+
+## 1. API 응답 시간 기준
+
+### 1.1 목표 응답 시간 (95th percentile 기준)
+| API 유형 | 목표 | 경고 | 위반 |
+|----------|------|------|------|
+| 단건 조회 (GET /{id}) | 100ms 이내 | 200ms | 500ms 이상 |
+| 목록 조회 (GET /) | 200ms 이내 | 400ms | 1,000ms 이상 |
+| 등록/수정 (POST/PUT) | 300ms 이내 | 500ms | 1,000ms 이상 |
+| 파일 업로드 | 1,000ms 이내 | 2,000ms | 5,000ms 이상 |
+| 검색 (복합 검색) | 500ms 이내 | 1,000ms | 2,000ms 이상 |
+| 대시보드 집계 | 1,000ms 이내 | 2,000ms | 5,000ms 이상 |
+
+### 1.2 측정 방법
+- Spring Boot Actuator + Micrometer를 통해 자동 측정
+- `/actuator/metrics/http.server.requests`에서 확인 가능
+
+---
+
+## 2. DB 쿼리 성능 기준
+
+### 2.1 쿼리 실행 시간
+| 쿼리 유형 | 목표 | Slow Query 기준 |
+|----------|------|----------------|
+| 단건 조회 (PK) | 5ms 이내 | 50ms 이상 |
+| 목록 조회 (인덱스) | 50ms 이내 | 200ms 이상 |
+| 복합 검색 | 100ms 이내 | 500ms 이상 |
+| 집계 쿼리 | 500ms 이내 | 2,000ms 이상 |
+| INSERT/UPDATE | 10ms 이내 | 100ms 이상 |
+
+### 2.2 Slow Query 로깅 설정
+```yaml
+# application.yml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true  # 개발환경만
+  datasource:
+    hikari:
+      leak-detection-threshold: 30000  # 30초 이상 미반환 커넥션 감지
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG           # 개발환경만
+    org.hibernate.stat: DEBUG          # 개발환경만
+```
+
+### 2.3 쿼리 최적화 체크리스트
+- [ ] N+1 문제가 없는가 (`@BatchSize`, `JOIN FETCH` 사용)
+- [ ] 불필요한 컬럼을 SELECT 하지 않는가 (DTO Projection 권장)
+- [ ] WHERE 절에 인덱스가 걸린 컬럼을 사용하는가
+- [ ] LIKE 검색 시 앞에 `%`를 붙이지 않는가 (`%keyword` -> 인덱스 미사용)
+- [ ] 페이징 시 COUNT 쿼리가 별도 최적화되었는가
+
+---
+
+## 3. 프론트엔드 성능 기준 (Core Web Vitals)
+
+### 3.1 목표 수치
+| 지표 | 설명 | 목표 (Good) | 보통 | 나쁨 |
+|------|------|------------|------|------|
+| LCP | Largest Contentful Paint (최대 콘텐츠 렌더링) | 2.5초 이내 | 2.5~4.0초 | 4.0초 초과 |
+| INP | Interaction to Next Paint (상호작용 응답) | 200ms 이내 | 200~500ms | 500ms 초과 |
+| CLS | Cumulative Layout Shift (레이아웃 안정성) | 0.1 이하 | 0.1~0.25 | 0.25 초과 |
+
+### 3.2 측정 도구
+- **Chrome DevTools** > Performance 탭
+- **Lighthouse** > Performance 점수 (80점 이상 목표)
+- **Web Vitals 라이브러리** (프로덕션 모니터링)
+
+```javascript
+// web-vitals 라이브러리 사용
+import { onLCP, onINP, onCLS } from 'web-vitals';
+
+onLCP(console.log);
+onINP(console.log);
+onCLS(console.log);
+```
+
+### 3.3 프론트엔드 최적화 체크리스트
+- [ ] 이미지에 `width`/`height` 속성이 명시되어 CLS 방지
+- [ ] 비동기 데이터 로딩 시 Skeleton UI 또는 로딩 표시
+- [ ] 번들 크기 최적화 (lazy import, tree-shaking)
+- [ ] 정적 리소스에 적절한 Cache-Control 헤더 설정
+- [ ] 큰 리스트에 가상 스크롤(virtualization) 적용
+
+---
+
+## 4. 동시 사용자 처리 기준
+
+| 항목 | 기준 |
+|------|------|
+| 동시 접속자 수 | 100명 이상 정상 응답 |
+| DB Connection Pool | 기본 10, 최대 30 |
+| Thread Pool | 기본 200 (Tomcat 기본값) |
+| 요청 타임아웃 | 30초 |
+
+### HikariCP 설정
+```yaml
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 30
+      idle-timeout: 600000        # 10분
+      max-lifetime: 1800000       # 30분
+      connection-timeout: 30000   # 30초
+```
+
+---
+
+## 5. 성능 테스트
+
+### 5.1 테스트 시점
+- 신규 기능 개발 완료 후 (주요 API 대상)
+- 릴리스 전 (전체 시나리오)
+- 성능 이슈 리포트 시 (해당 API 집중)
+
+### 5.2 기본 시나리오
+```
+1. 로그인 -> 대시보드 조회
+2. 티켓 목록 조회 (페이징)
+3. 티켓 상세 조회
+4. 티켓 등록 (파일 첨부 포함)
+5. 티켓 상태 변경
+```
+
+### 5.3 도구
+- **JMeter** 또는 **k6** (부하 테스트)
+- **Chrome Lighthouse** (프론트엔드)
+- **pg_stat_statements** (PostgreSQL 쿼리 통계)

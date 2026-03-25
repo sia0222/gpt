@@ -1,0 +1,221 @@
+---
+description: "범용표준: 프론트엔드 (STANDARD_FRONTEND)"
+alwaysApply: true
+---
+
+# 범용표준: 프론트엔드 (STANDARD_FRONTEND)
+
+---
+
+# [DOCUMENT_TYPE] FRONTEND_ARCHITECTURE
+# [VERSION] 1.0.0
+
+## 1. 개요 및 역할
+이 문서는 프론트엔드 개발을 전담하는 바이브 코딩 전문가를 위한 아키텍처 표준입니다.
+Vite + React.js 기반 하에 엄격한 아키텍처와 프리미엄 UI/UX 원칙을 준수하여 구현합니다.
+
+---
+
+## 2. 핵심 아키텍처: Barrel-First & Feature Isolation
+모든 코드는 아래 구조를 강제로 따라야 합니다.
+
+### [필수 규격] Feature Module 구조
+새로운 기능을 개발할 때 반드시 다음 구조를 준수합니다:
+- `features/{domain}/index.ts`: Public API (외부에는 이것만 노출)
+- `features/{domain}/{Domain}Routes.tsx`: 독립적 라우팅 설정
+- `features/{domain}/pages/`: 페이지 컴포넌트
+- `features/{domain}/components/`: 도메인 전용 컴포넌트
+- `features/{domain}/services/`: 비즈니스 로직 및 API 호출
+
+---
+
+## 3. API 통신 규칙
+- `success`, `code`, `message`, `data`, `timestamp` 구조의 표준 응답 규격을 준수합니다.
+- React Query(TanStack Query)를 활용하여 서버 상태를 관리하며, 데이터 로딩/에러 상태를 선언적으로 처리합니다.
+
+---
+
+## 4. 개발 워크플로우
+1. **Logic Separation**: UI 코드를 작성하기 전에 필요한 데이터 구조와 커스텀 훅을 먼저 정의합니다.
+2. **Skeleton First**: 폴더 구조와 `index.ts` (Barrel)를 먼저 구성합니다.
+3. **Type Check**: 구현 과정에서 타입 에러가 발생하지 않도록 실시간으로 검증합니다.
+
+---
+
+## 5. 제약 사항
+- **직접 DB 접근 금지**: 오직 정의된 API를 통해서만 통신합니다.
+- **도메인 침범 금지**: `features/{A}` 컴포넌트가 `features/{B}` 내부 파일을 직접 참조하는 것을 금지합니다. 반드시 `index.ts`를 통해 공유합니다.
+- **비즈니스 로직 유출 금지**: 페이지 컴포넌트(`.tsx`) 내부에 20라인 이상의 비즈니스 로직(데이터 가공 등)을 포함하는 것을 지양하고 훅으로 분리합니다.
+
+
+---
+
+# [DOCUMENT_TYPE] FRONTEND_COMPONENT_STANDARD
+# [VERSION] 1.1.0
+
+## 1. 컴포넌트 정의 표준 (Component Guidelines)
+
+### 1.1 컴포넌트 구조
+- 모든 컴포넌트는 **함수형 컴포넌트**로 작성하며, `const` 키워드를 사용합니다.
+- Props 타입은 반드시 `interface`로 정의하고, 컴포넌트 파일 상단에 위치시킵니다.
+- **파일당 하나의 메인 컴포넌트**만 존재해야 하며, 서브 컴포넌트가 필요할 경우 `features/{domain}/components/fragments/` 폴더에 분리합니다.
+
+### 1.2 Export 규칙
+- 컴포넌트 파일에서는 **Named Export**를 기본으로 합니다.
+- `features/{domain}/index.ts` (Barrel File)를 통해 외부로 노출할 컴포넌트를 정의합니다.
+
+```tsx
+// 예시: features/ticket/components/TicketList.tsx
+interface TicketListProps {
+  tickets: Ticket[];
+  onSelect: (id: string) => void;
+}
+
+export const TicketList = ({ tickets, onSelect }: TicketListProps) => {
+  return (
+    // 구현부
+  );
+};
+```
+
+---
+
+## 2. 커스텀 훅 표준 (Hooks Guidelines)
+
+### 2.1 로직과 뷰의 분리
+- 복잡한 비즈니스 로직, 상태 관리, API 호출은 반드시 **커스텀 훅**으로 추출합니다.
+- UI 컴포넌트는 가급적 전달받은 데이터를 렌더링하는 역할에 집중합니다.
+
+### 2.2 훅의 분류 및 네이밍
+- **Data Hook**: API 통신 및 데이터 캐싱 처리 (`use{Entity}Query`, `use{Entity}Mutation`)
+- **Logic Hook**: 비즈니스 로직 및 상태 변경 처리 (`use{Feature}Logic`)
+- **UI Hook**: 단순 UI 상태(Modal, Toggle 등) 처리 (`use{UIElement}`)
+
+### 2.3 구현 원칙
+- 훅의 반환값은 가급적 **객체(`{}`) 형태**로 제공하여 확장성을 확보합니다.
+- `useEffect`는 가급적 사용을 지양하며, 이벤트 핸들러나 React Query의 콜백을 사용합니다.
+
+```tsx
+// 예시: features/ticket/services/useTicketLogic.ts
+export const useTicketLogic = (projectId: string) => {
+  const [filter, setFilter] = useState('ALL');
+  const { data: tickets, isLoading } = useTicketsQuery(projectId);
+
+  const filteredTickets = useMemo(() => {
+    return tickets?.filter(t => filter === 'ALL' || t.status === filter);
+  }, [tickets, filter]);
+
+  return { filteredTickets, isLoading, setFilter };
+};
+```
+
+---
+
+## 3. 상태 관리 표준 (State Management)
+
+### 3.1 Zustand Store 구조
+- 전역 상태는 `features/{domain}/services/use{Domain}Store.ts`에 정의합니다.
+- Store는 가급적 원자적으로 쪼개어 관리하며, 큰 Store의 경우 슬라이스 패턴을 고려합니다.
+
+### 3.2 Selector 활용
+- 성능 최적화를 위해 컴포넌트에서 Store를 구독할 때는 반드시 **Selector**를 사용합니다.
+
+```tsx
+// 예시
+const tickets = useTicketStore((state) => state.tickets);
+const addTicket = useTicketStore((state) => state.addTicket);
+```
+
+---
+
+## 5. 프론트엔드 설계 원칙 (Engineering Principles)
+
+### 5.1 가독성 (Readability): "읽기 쉬운 코드가 유지보수가 가능하다"
+- **매직 넘버 상수화**: 코드 내의 설명 없는 숫자나 문자열은 반드시 네이밍된 상수로 정의합니다. (예: `const ANIMATION_DURATION = 300;`)
+- **복잡한 조건 변수화**: JSX 내부에 3개 이상의 조건이 결합된 경우, 반드시 해당 조건을 설명하는 변수로 추출합니다.
+- **삼항 연산자 단순화**: 중첩된 삼항 연산자는 절대로 사용하지 않습니다. 복잡한 분기는 `if/else` 또는 `switch`문이 포함된 전용 함수/컴포넌트로 분리하거나 IIFE를 활용합니다.
+
+### 5.2 예측 가능성 (Predictability): "기대하는 대로 동작하는 코드"
+- **훅 반환값 표준화**: 모든 커스텀 훅은 확장성을 위해 **객체(`{}`) 형태**로 반환합니다. (순서에 의존하는 배열 형태 지양)
+- **명시적 로직 노출**: 함수나 훅의 이름이 암시하지 않는 숨겨진 부수 효과(Side Effect)를 포함하지 않습니다. (단일 책임 원칙 준수)
+- **유효성 검사 결과 표준화**: 검증 함수의 결과는 `{ ok: boolean; reason?: string }`과 같이 예측 가능한 타입을 반환하여 사용처에서 명확히 처리하게 합니다.
+
+### 5.3 응집도 (Cohesion): "코드의 위치가 논리적 맥락과 일치해야 한다"
+- **로직의 근접 배치 (Colocation)**: 너무 단순한 일회성 로직은 무리하게 훅으로 추출하지 않습니다. 코드의 흐름을 방해하지 않는 선에서 사용처와 가까운 곳에 인라인으로 정의하여 "눈의 이동 거리"를 줄입니다.
+- **도메인 단위 구성**: 모든 관련 파일(Service, Hook, Component)은 도메인 폴더 내에 응집시켜 관리합니다.
+
+### 5.4 결합도 (Coupling): "의존성을 최소화하여 영향 범위를 제어한다"
+- **컴포넌트 합성 (Composition)**: Props Drilling이 발생하는 경우, 중간 컴포넌트에 Props를 넘기지 말고 `children`이나 구체적인 컴포넌트를 주입받는 합성을 사용하여 결합도를 낮춥니다.
+- **성능을 고려한 상태 격리**: 너무 넓은 영역의 상태(Store)를 구독하지 않도록 Selector를 사용하거나 상태 범위를 쪼개어, 관련 없는 업데이트로 인한 리렌더링을 방지합니다.
+
+
+---
+
+# 웹 접근성 자가 진단 체크리스트 (Accessibility Checklist)
+
+## 1. 인식의 용이성
+
+### 1.1 대체 텍스트
+- [ ] 모든 `<img>` 태그에 의미 있는 `alt` 속성이 있는가
+- [ ] 장식용 이미지는 `alt=""`로 스크린리더에서 건너뛰도록 처리했는가
+- [ ] 아이콘 버튼에 `aria-label`이 있는가
+
+### 1.2 멀티미디어 대체
+- [ ] 영상 콘텐츠에 자막을 제공하는가
+- [ ] 오디오 콘텐츠에 대본을 제공하는가
+
+### 1.3 색상 구분
+- [ ] 정보 전달 시 색상만으로 구분하지 않고, 텍스트나 아이콘을 함께 사용하는가
+- [ ] 텍스트와 배경의 명도 대비가 4.5:1 이상인가 (일반 텍스트 기준)
+
+---
+
+## 2. 운용의 용이성
+
+### 2.1 키보드 접근성
+- [ ] 모든 기능을 키보드만으로 접근하고 실행할 수 있는가
+- [ ] Tab 키로 이동하는 포커스 순서가 논리적인가
+- [ ] 포커스가 시각적으로 명확히 표시되는가 (outline 등)
+- [ ] 키보드 트랩(특정 영역에 포커스가 갇히는 현상)이 없는가
+
+### 2.2 모달/다이얼로그
+- [ ] 모달 열림 시 포커스가 모달 내부로 이동하는가
+- [ ] 모달 내에서 Tab 순환이 모달 영역 안에서만 이루어지는가
+- [ ] ESC 키로 모달을 닫을 수 있는가
+- [ ] 모달 닫힘 시 포커스가 트리거 버튼으로 복귀하는가
+
+### 2.3 충분한 시간
+- [ ] 세션 만료 전 알림을 제공하는가
+- [ ] 자동 전환 콘텐츠(슬라이더 등)에 일시정지 버튼이 있는가
+
+---
+
+## 3. 이해의 용이성
+
+### 3.1 폼 레이블
+- [ ] 모든 `<input>` 요소에 `<label>`이 `htmlFor`로 연결되어 있는가
+- [ ] 숨김 처리된 레이블도 스크린리더용으로 존재하는가 (`sr-only` 클래스)
+- [ ] 필수 입력 필드에 `(필수)` 또는 `*` 안내가 있는가
+
+### 3.2 오류 안내
+- [ ] 유효성 검사 실패 시 어떤 필드에서 오류가 발생했는지 명확히 안내하는가
+- [ ] 오류 메시지에 수정 방법이 포함되어 있는가
+- [ ] 오류 발생 시 해당 필드로 포커스가 이동하는가
+
+### 3.3 일관적 네비게이션
+- [ ] 모든 페이지에서 메뉴 구조와 위치가 동일한가
+- [ ] 같은 기능의 버튼이 항상 같은 위치에 있는가
+
+---
+
+## 4. 견고성
+
+### 4.1 마크업 유효성
+- [ ] HTML 태그가 올바르게 열리고 닫히는가
+- [ ] 시맨틱 태그를 적절히 사용하는가 (`<header>`, `<nav>`, `<main>`, `<footer>`)
+- [ ] `<h1>` ~ `<h6>` 제목 태그의 계층 구조가 올바른가
+
+### 4.2 WAI-ARIA 사용
+- [ ] 복잡한 위젯(탭, 아코디언, 드롭다운)에 적절한 `role` 속성이 있는가
+- [ ] 동적으로 변경되는 콘텐츠에 `aria-live` 속성이 있는가
+- [ ] 확장/축소 가능한 요소에 `aria-expanded` 속성이 있는가
