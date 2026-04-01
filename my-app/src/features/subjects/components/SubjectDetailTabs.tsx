@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import type { SubjectDetailView } from "@/features/subjects/services/subjectWorkspaceMock";
+import { SUBJECT_SERVICE_MAPPING_MOCK } from "@/features/service-management/services/serviceCatalogMock";
 
 // ──── MOCK DATA DEFINITIONS ────
 
@@ -55,8 +56,8 @@ const AI_SPEAKER_MOCK = {
 
 const TAB_DEFS = [
   { id: "devices", label: "스마트 디바이스 관제" },
-  { id: "timeline", label: "알림 타임라인·메모" },
-  { id: "service", label: "행정 서비스 및 문서" },
+  { id: "counseling", label: "상담 이력" },
+  { id: "service", label: "서비스 이력" },
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
@@ -72,8 +73,10 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
   const [active, setActive] = useState<TabId>("devices");
   const [deviceTab, setDeviceTab] = useState<string>("carero");
 
-  function tabId(tab: TabId) { return `${baseId}-tab-${tab}`; }
-  function panelId(tab: TabId) { return `${baseId}-panel-${tab}`; }
+  // Filter the mock services for the current subject (fallback to all if mock doesn't match well)
+  const myServices = SUBJECT_SERVICE_MAPPING_MOCK.filter(m => m.subjectName === subject.name).length > 0 
+    ? SUBJECT_SERVICE_MAPPING_MOCK.filter(m => m.subjectName === subject.name)
+    : SUBJECT_SERVICE_MAPPING_MOCK.slice(0, 3);
 
   return (
     <div className="flex flex-col h-full min-h-[500px] bg-zinc-50/30">
@@ -83,7 +86,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
           return (
             <button
               key={tab.id} role="tab" aria-selected={isActive} tabIndex={isActive ? 0 : -1} onClick={() => setActive(tab.id)}
-              className={["rounded-t-xl px-5 py-3 text-[13px] font-extrabold transition-all relative border border-transparent tracking-wide", isActive ? "bg-zinc-50 text-blue-700 border-x-zinc-200 border-t-zinc-200 translate-y-[1px] shadow-[0_-3px_10px_rgba(0,0,0,0.03)]" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/50"].join(" ")}
+              className={["rounded-t-xl px-5 py-3 text-[13px] font-extrabold transition-all relative border border-transparent tracking-wide whitespace-nowrap", isActive ? "bg-zinc-50 text-blue-700 border-x-zinc-200 border-t-zinc-200 translate-y-[1px] shadow-[0_-3px_10px_rgba(0,0,0,0.03)] z-10" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/50"].join(" ")}
             >
               {tab.label}
               {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-[2.5px] bg-blue-600 rounded-t-sm" />}
@@ -100,7 +103,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
             {DEVICE_TABS.map(dt => (
               <button
                 key={dt.id} onClick={() => setDeviceTab(dt.id)}
-                className={["flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[13px] font-extrabold transition-all", deviceTab === dt.id ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
+                className={["flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[13px] font-extrabold transition-all whitespace-nowrap", deviceTab === dt.id ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
               >
                 <span className="text-[14px] grayscale-[0.3]">{dt.icon}</span> {dt.name}
               </button>
@@ -329,35 +332,120 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
           </div>
         </div>
 
-        {/* === 2. 타임라인 및 메모 === */}
-        <div hidden={active !== "timeline"} className="animate-in fade-in duration-300 grid gap-8 lg:grid-cols-2">
-           <section>
-             <h3 className="text-[13px] font-bold text-zinc-900 mb-4 border-l-2 border-zinc-300 pl-2">과거 알림 타임라인</h3>
-              <ul className="space-y-4 border-l-2 border-zinc-100 pl-4 relative">
-                {subject.alertTimeline.map((ev) => (
-                  <li key={`${ev.time}-${ev.message}`} className="relative">
-                    <span className={["absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm ring-2 ring-transparent", ev.level === "critical" ? "bg-rose-500 ring-rose-100" : ev.level === "warn" ? "bg-amber-500 ring-amber-100" : "bg-zinc-400"].join(" ")} aria-hidden />
-                    <time className="font-mono text-[10px] text-zinc-400 block pb-1">{ev.time}</time>
-                    <p className="font-bold text-[13px] text-zinc-800 leading-snug">{ev.message}</p>
-                  </li>
-                ))}
-            </ul>
-           </section>
-           <section>
-             <h3 className="text-[13px] font-bold text-zinc-900 mb-4 border-l-2 border-zinc-300 pl-2">운영자 메모</h3>
-             <ul className="space-y-3">
-               {subject.memos.map((memo) => (
-                 <li key={memo} className="bg-[#fff9c4]/30 border border-[#fff59d] p-4 rounded-xl shadow-[0_1px_3px_rgba(255,235,59,0.1)] relative">
-                   <p className="text-[12px] font-medium text-[#827717]">{memo}</p>
-                 </li>
-               ))}
-             </ul>
-           </section>
+        {/* === 2. 상담 이력 (이전: 알림 타임라인·메모) === */}
+        <div hidden={active !== "counseling"} className="animate-in fade-in duration-300">
+           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col h-[500px]">
+             <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-6 items-center justify-between shrink-0">
+               <div>
+                  <h3 className="text-[16px] font-extrabold text-zinc-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-purple-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                    대화형 STT 통합 상담 이력
+                  </h3>
+                  <p className="text-[12px] font-medium text-zinc-500 mt-1">AI 스피커 및 자동 전화 안부를 통해 수집된 음성 인식 기반 상담 메모</p>
+               </div>
+               <button type="button" className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-[12px] font-bold text-zinc-700 hover:bg-zinc-50 shadow-sm transition-all focus:ring-2 outline-none whitespace-nowrap">
+                 + 수동 상담 기록
+               </button>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/30">
+               {subject.consultations.length === 0 ? (
+                 <div className="flex items-center justify-center p-10 text-zinc-400 text-[13px]">상담 이력이 존재하지 않습니다.</div>
+               ) : (
+                 <div className="grid gap-4 lg:grid-cols-2">
+                   {subject.consultations.map((c, i) => (
+                     <article key={i} className="rounded-2xl border border-zinc-200/70 bg-white p-5 shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+                       <div className="flex justify-between items-start mb-3">
+                         <div className="flex items-center gap-2">
+                            <span className="bg-purple-50 text-purple-700 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase border border-purple-100">AI 스피커</span>
+                            <time className="font-mono text-[11px] font-medium text-zinc-400">{c.at}</time>
+                         </div>
+                         <div className="flex items-center gap-1.5 text-zinc-700 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-100">
+                           <span className="text-[10px] font-bold text-zinc-400">감정 분석</span>
+                           <span className="text-[11px] font-extrabold">{c.emotionLabel}</span>
+                           <span className="text-zinc-300">|</span>
+                           <span className="text-[11px] font-mono font-bold tabnum">{c.emotionScore.toFixed(2)}</span>
+                         </div>
+                       </div>
+                       
+                       <div className="text-[13px] leading-relaxed text-zinc-800 font-medium bg-zinc-50/50 p-3 rounded-xl border border-zinc-100 flex-1">
+                         {c.summary}
+                       </div>
+                       
+                       <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
+                         <div className="flex items-center gap-2 text-[11px]">
+                           <span className="text-zinc-400 shrink-0 font-bold">감출 키워드</span>
+                           <div className="flex flex-wrap gap-1.5">
+                             {c.keywords.length > 0 ? c.keywords.map(kw => (
+                               <span key={kw} className="bg-white text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded shadow-sm font-bold">
+                                 #{kw}
+                               </span>
+                             )) : <span className="text-zinc-300">-</span>}
+                           </div>
+                         </div>
+                         <button className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 underline underline-offset-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                           녹취록 전문 보기
+                         </button>
+                       </div>
+                     </article>
+                   ))}
+                 </div>
+               )}
+             </div>
+           </div>
         </div>
 
-        {/* === 3. 서비스 및 행정 =================== */}
+        {/* === 3. 서비스 이력 (이전: 행정 서비스 및 문서) === */}
         <div hidden={active !== "service"} className="animate-in fade-in duration-300">
-          <p className="text-[13px] text-zinc-500">진행 중인 행정 서비스 내역이 표시됩니다.</p>
+           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col h-[500px]">
+             <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-6 items-center justify-between shrink-0">
+               <div>
+                  <h3 className="text-[16px] font-extrabold text-zinc-900 flex items-center gap-2">
+                     <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                     배정 및 이용중인 대상자 서비스 이력
+                  </h3>
+                  <p className="text-[12px] font-medium text-zinc-500 mt-1">서비스 관리 모듈과 연동되어 대상자가 현재 수급받고 있는 행정 복지 시스템 이력을 조회합니다.</p>
+               </div>
+               <button type="button" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[12px] font-extrabold text-blue-700 hover:bg-blue-100 shadow-sm transition-all focus:ring-2 outline-none whitespace-nowrap">
+                 + 신규 서비스 배정
+               </button>
+             </div>
+
+             <div className="flex-1 overflow-x-auto min-h-0 bg-white">
+               <table className="w-full text-left text-[13px] min-w-[700px]">
+                 <thead className="bg-zinc-50/80 text-[11px] font-extrabold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
+                   <tr>
+                     <th className="px-6 py-4 whitespace-nowrap">상태</th>
+                     <th className="px-6 py-4 min-w-[200px]">적용된 행정 서비스 명칭</th>
+                     <th className="px-6 py-4 min-w-[140px]">분류 라인</th>
+                     <th className="px-6 py-4 whitespace-nowrap text-center">이용 기간</th>
+                     <th className="px-6 py-4 whitespace-nowrap text-center">중복위험 알림</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-zinc-100">
+                   {myServices.length === 0 ? (
+                     <tr><td colSpan={5} className="py-20 text-center text-[13px] text-zinc-400 font-medium">현재 배정(수급) 이력이 없습니다.</td></tr>
+                   ) : (
+                     myServices.map((m) => (
+                       <tr key={m.id} className="hover:bg-zinc-50/50 transition-colors group cursor-pointer">
+                         <td className="px-6 py-4">
+                           <span className={["inline-flex rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase border shadow-sm", m.status === "이용중" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : m.status === "일시중지" ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-zinc-100 text-zinc-600 border-zinc-200"].join(" ")}>{m.status}</span>
+                         </td>
+                         <td className="px-6 py-4 font-bold text-zinc-900">{m.serviceName}</td>
+                         <td className="px-6 py-4 text-[12px] font-medium text-zinc-500">{m.tierPath}</td>
+                         <td className="px-6 py-4 font-mono text-[11px] text-center text-zinc-500 bg-zinc-50/50">{m.start} <span className="text-zinc-300 mx-1">~</span> {m.end}</td>
+                         <td className="px-6 py-4 text-center">
+                           {m.dupWarning ? <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-1 rounded-md shadow-sm border border-rose-200 uppercase tracking-wide">중복위험</span> : <span className="text-zinc-300">—</span>}
+                         </td>
+                       </tr>
+                     ))
+                   )}
+                 </tbody>
+               </table>
+             </div>
+           </div>
         </div>
       </div>
     </div>
