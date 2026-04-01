@@ -1,82 +1,64 @@
 /**
- * 필터 툴바 — 상단 칩/컨트롤 밀도
+ * 대시보드 검색·필터 — 콤팩트 인라인 스타일
  */
 export function DashboardFilterBar() {
+  const selectClass =
+    "h-8 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
+
   return (
     <section
-      className="dash-card mb-6 flex flex-wrap items-end gap-3 p-4 sm:p-5"
+      className="flex flex-wrap items-center gap-2.5 rounded-xl border border-zinc-200/70 bg-white px-4 py-3 shadow-sm"
       aria-label="대시보드 필터"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-          Filters
-        </span>
-        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[12px] font-medium text-zinc-600">
-          오늘
-        </span>
-        <span className="hidden text-zinc-300 sm:inline">·</span>
-        <span className="hidden text-[12px] text-zinc-500 sm:inline">지역 전체</span>
+      {/* 검색 */}
+      <div className="relative min-w-[180px] flex-1 basis-[180px]">
+        <svg
+          className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
+          viewBox="0 0 16 16" fill="none" aria-hidden
+        >
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <input
+          id="dash-search"
+          type="search"
+          placeholder="이름 · 주소 검색"
+          className="h-8 w-full rounded-lg border border-zinc-200 bg-zinc-50/50 pl-8 pr-3 text-[12px] text-zinc-800 outline-none transition placeholder:text-zinc-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+          autoComplete="off"
+        />
       </div>
 
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-zinc-500">
-        기간
-        <select
-          className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-900 shadow-sm outline-none ring-blue-500/20 focus:ring-2"
-          defaultValue="today"
-        >
-          <option value="today">오늘</option>
-          <option value="7d">최근 7일</option>
-          <option value="30d">최근 30일</option>
+      {/* 구분선 */}
+      <div className="hidden h-5 w-px bg-zinc-200 sm:block" aria-hidden />
+
+      {/* 필터 셀렉트 */}
+      {([
+        { label: "지역", opts: ["전체", "강남구", "송파구"] },
+        { label: "담당자", opts: ["전체", "박간호", "이상담"] },
+        { label: "위험등급", opts: ["전체", "정상", "관심", "주의", "위험", "긴급"] },
+        { label: "연령", opts: ["전체", "65–74", "75–84", "85+"] },
+      ] as const).map(({ label, opts }) => (
+        <select key={label} className={selectClass} defaultValue="전체" aria-label={label}>
+          {opts.map((o) => (
+            <option key={o}>{label === "지역" || label === "담당자" ? o : `${label} ${o}`}</option>
+          ))}
         </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-zinc-500">
-        지역
-        <select
-          className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] shadow-sm outline-none ring-blue-500/20 focus:ring-2"
-          defaultValue="all"
+      ))}
+
+      <div className="ml-auto flex items-center gap-1.5">
+        <button
+          type="button"
+          className="h-8 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-500 transition hover:bg-zinc-50 active:scale-[0.97]"
         >
-          <option value="all">전체</option>
-          <option value="gangnam">강남구</option>
-          <option value="songpa">송파구</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-zinc-500">
-        담당 동
-        <select
-          className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] shadow-sm outline-none ring-blue-500/20 focus:ring-2"
-          defaultValue="all"
+          초기화
+        </button>
+        <button
+          type="button"
+          className="h-8 rounded-lg bg-zinc-800 px-4 text-[12px] font-semibold text-white shadow-sm transition hover:bg-zinc-700 active:scale-[0.97]"
         >
-          <option value="all">전체</option>
-          <option value="d1">○○동</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-zinc-500">
-        서비스
-        <select
-          className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] shadow-sm outline-none ring-blue-500/20 focus:ring-2"
-          defaultValue="all"
-        >
-          <option value="all">전체</option>
-          <option value="hc">헬스케어</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-medium text-zinc-500">
-        상태
-        <select
-          className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] shadow-sm outline-none ring-blue-500/20 focus:ring-2"
-          defaultValue="all"
-        >
-          <option value="all">전체</option>
-          <option value="using">이용중</option>
-          <option value="risk">위험</option>
-        </select>
-      </label>
-      <button
-        type="button"
-        className="ml-auto rounded-lg bg-zinc-900 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-zinc-800"
-      >
-        조회
-      </button>
+          조회
+        </button>
+      </div>
     </section>
   );
 }

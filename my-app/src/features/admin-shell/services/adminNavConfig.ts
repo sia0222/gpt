@@ -12,6 +12,7 @@ export interface AdminNavItem {
   readonly label: string;
   readonly end?: boolean;
   readonly glyph: AdminNavGlyph;
+  readonly children?: readonly AdminNavItem[];
 }
 
 export interface AdminNavGroup {
@@ -47,8 +48,12 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
   },
 ] as const;
 
-export const ADMIN_PRIMARY_NAV: readonly AdminNavItem[] = ADMIN_NAV_GROUPS.flatMap(
-  (group) => group.items,
+function flattenItems(items: readonly AdminNavItem[]): AdminNavItem[] {
+  return items.flatMap((item) => [item, ...(item.children ? flattenItems(item.children) : [])]);
+}
+
+export const ADMIN_PRIMARY_NAV: readonly AdminNavItem[] = ADMIN_NAV_GROUPS.flatMap((group) =>
+  flattenItems(group.items),
 );
 
 export interface BreadcrumbSegment {
@@ -67,11 +72,36 @@ export function getBreadcrumbs(pathname: string): BreadcrumbSegment[] {
   if (pathname === "/") {
     return [...base, { label: title }];
   }
-  const group = ADMIN_NAV_GROUPS.find((g) =>
-    g.items.some((item) => item.to === pathname),
-  );
+
+  function findItemTrail(
+    items: readonly AdminNavItem[],
+    targetPath: string,
+    trail: AdminNavItem[] = [],
+  ): AdminNavItem[] | null {
+    for (const item of items) {
+      const nextTrail = [...trail, item];
+      if (item.to === targetPath) {
+        return nextTrail;
+      }
+      if (item.children?.length) {
+        const found = findItemTrail(item.children, targetPath, nextTrail);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  const group = ADMIN_NAV_GROUPS.find((g) => findItemTrail(g.items, pathname));
+  const itemTrail = group ? findItemTrail(group.items, pathname) : null;
   if (group) {
-    return [...base, { label: group.label }, { label: title, to: pathname }];
+    const itemSegments =
+      itemTrail?.map((item, index) => ({
+        label: item.label,
+        to: index === itemTrail.length - 1 ? pathname : item.to,
+      })) ?? [{ label: title, to: pathname }];
+    return [...base, { label: group.label }, ...itemSegments];
   }
   return [...base, { label: title }];
 }

@@ -4,7 +4,7 @@
   --background: #fafafa;
   --foreground: #0a0a0a;
   /* 관리자 대시보드 공통 토큰 (라이트 고정) */
-  --dash-canvas: #f6f8fc;
+  --dash-canvas: #f0f2f8;
   --dash-foreground: #18181b;
   --dash-muted: #71717a;
   --dash-subtle: #a1a1aa;
@@ -12,6 +12,13 @@
   --dash-border: #e4e4e7;
   --dash-text-base: 0.9375rem;
   --dash-leading: 1.55;
+  /* signal colors (관제 전용) */
+  --signal-safe: #10b981;
+  --signal-info: #3b82f6;
+  --signal-warn: #f59e0b;
+  --signal-danger: #ef4444;
+  --signal-critical: #dc2626;
+  --signal-muted: #94a3b8;
 }
 
 @theme inline {
@@ -23,9 +30,9 @@
   --color-dash-subtle: var(--dash-subtle);
   --color-dash-surface: var(--dash-surface);
   --color-dash-border: var(--dash-border);
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
 
@@ -53,7 +60,7 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 관리 콘솔 캔버스 (애널리틱스/스튜디오 계열 밀도) */
+/* 관리 콘솔 캔버스 */
 .dash-app {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   font-size: var(--dash-text-base);
@@ -61,12 +68,85 @@ body {
   color: var(--dash-foreground);
 }
 
+/* 공통 카드 */
 .dash-card {
   border-radius: 1rem;
   border: 1px solid color-mix(in srgb, var(--dash-border) 85%, transparent);
   background-color: var(--dash-surface);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.04), 0 1px 2px rgb(15 23 42 / 0.03);
 }
+
+/* ─── 대시보드 전용 유틸 ─────────────────────────── */
+
+/* 라이브 펄스 인디케이터 */
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  70% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+.live-pulse {
+  position: relative;
+}
+.live-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--signal-danger);
+  opacity: 0;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* KPI 카드 호버 리프트 */
+@keyframes kpi-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kpi-card {
+  animation: kpi-enter 0.4s ease-out both;
+}
+.kpi-card:nth-child(2) { animation-delay: 0.04s; }
+.kpi-card:nth-child(3) { animation-delay: 0.08s; }
+.kpi-card:nth-child(4) { animation-delay: 0.12s; }
+
+/* 프로그레스 바 채우기 애니메이션 */
+@keyframes fill-bar {
+  from { width: 0; }
+}
+.bar-fill {
+  animation: fill-bar 0.8s ease-out both;
+}
+
+/* 번호/순위 */
+.rank-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* 타임라인 도트 */
+.timeline-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* 카운트다운 숫자 */
+.tabnum {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ─── 접근성 & 기타 ──────────────────────────────── */
 
 /* Skip link (STANDARD_PUBLISHING) */
 .skip-link {

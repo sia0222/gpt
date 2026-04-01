@@ -1,11 +1,14 @@
 import type { SVGProps } from "react";
 
 type G = SVGProps<SVGSVGElement>;
+const NAV_ICON_STROKE_WIDTH = 2;
 
 export function GlyphLayout({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM13 5a1 1 0 011-1h4a1 1 0 011 1v12a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 14a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3z" stroke="currentColor" strokeWidth="1.75" />
+      <rect x="3.5" y="4" width="7.5" height="7.5" rx="2" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <rect x="13" y="4" width="7.5" height="16" rx="2" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <rect x="3.5" y="14" width="7.5" height="6" rx="2" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
     </svg>
   );
 }
@@ -13,8 +16,14 @@ export function GlyphLayout({ className, ...p }: G) {
 export function GlyphPeople({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 11h5M18.5 8.5v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="9" cy="8" r="3.2" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <path
+        d="M3.5 19v-0.8A4.8 4.8 0 018.3 13.4h1.4a4.8 4.8 0 014.8 4.8v0.8M16.5 10.8h4.5M18.75 8.5v4.6"
+        stroke="currentColor"
+        strokeWidth={NAV_ICON_STROKE_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -22,8 +31,13 @@ export function GlyphPeople({ className, ...p }: G) {
 export function GlyphRadar({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M12 3a9 9 0 109 9M12 3v4M21 12h-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M12 4a8 8 0 108 8M12 4v3.4M20 12h-3.4"
+        stroke="currentColor"
+        strokeWidth={NAV_ICON_STROKE_WIDTH}
+        strokeLinecap="round"
+      />
+      <circle cx="12" cy="12" r="2.8" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
     </svg>
   );
 }
@@ -31,8 +45,8 @@ export function GlyphRadar({ className, ...p }: G) {
 export function GlyphArticle({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M4 5h16v14H4z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M8 9h8M8 13h6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <rect x="4" y="4" width="16" height="16" rx="2.5" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} strokeLinecap="round" />
     </svg>
   );
 }
@@ -40,7 +54,7 @@ export function GlyphArticle({ className, ...p }: G) {
 export function GlyphChart({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M4 19V5M8 19v-6M12 19V9M16 19v-4M20 19v-9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M5 19V7M10 19v-5M15 19V9M20 19v-8" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} strokeLinecap="round" />
     </svg>
   );
 }
@@ -48,7 +62,13 @@ export function GlyphChart({ className, ...p }: G) {
 export function GlyphBell({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path
+        d="M15.2 17H20l-1.25-1.25A1.9 1.9 0 0118.2 14.4v-2.7a6.2 6.2 0 10-12.4 0v2.7c0 .5-.2 1-.55 1.35L4 17h4.8m6.4 0v.8a3.2 3.2 0 01-6.4 0V17m6.4 0H8.8"
+        stroke="currentColor"
+        strokeWidth={NAV_ICON_STROKE_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -56,8 +76,13 @@ export function GlyphBell({ className, ...p }: G) {
 export function GlyphGear({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <path
+        d="M19.4 12a1.6 1.6 0 011 .3l.05.03a1.9 1.9 0 010 3.3l-.05.03a1.6 1.6 0 01-1 .3 1.6 1.6 0 00-1.45.94l-.03.07a1.6 1.6 0 00.2 1.7l.04.05a1.9 1.9 0 01-2.33 2.33l-.05-.04a1.6 1.6 0 00-1.7-.2l-.07.03a1.6 1.6 0 00-.94 1.45 1.6 1.6 0 01-.3 1l-.03.05a1.9 1.9 0 01-3.3 0l-.03-.05a1.6 1.6 0 01-.3-1 1.6 1.6 0 00-.94-1.45l-.07-.03a1.6 1.6 0 00-1.7.2l-.05.04a1.9 1.9 0 01-2.33-2.33l.04-.05a1.6 1.6 0 00.2-1.7l-.03-.07A1.6 1.6 0 004.6 16a1.6 1.6 0 01-1-.3l-.05-.03a1.9 1.9 0 010-3.3l.05-.03a1.6 1.6 0 011-.3 1.6 1.6 0 001.45-.94l.03-.07a1.6 1.6 0 00-.2-1.7l-.04-.05a1.9 1.9 0 012.33-2.33l.05.04a1.6 1.6 0 001.7.2l.07-.03A1.6 1.6 0 009.6 5.6a1.6 1.6 0 01.3-1l.03-.05a1.9 1.9 0 013.3 0l.03.05a1.6 1.6 0 01.3 1 1.6 1.6 0 00.94 1.45l.07.03a1.6 1.6 0 001.7-.2l.05-.04a1.9 1.9 0 012.33 2.33l-.04.05a1.6 1.6 0 00-.2 1.7l.03.07A1.6 1.6 0 0019.4 12z"
+        stroke="currentColor"
+        strokeWidth={NAV_ICON_STROKE_WIDTH}
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -65,8 +90,8 @@ export function GlyphGear({ className, ...p }: G) {
 export function GlyphPanelLeft({ className, ...p }: G) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden {...p}>
-      <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M9 4v16" stroke="currentColor" strokeWidth="1.75" />
+      <rect x="3" y="4" width="18" height="16" rx="2.5" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
+      <path d="M9 4v16" stroke="currentColor" strokeWidth={NAV_ICON_STROKE_WIDTH} />
     </svg>
   );
 }

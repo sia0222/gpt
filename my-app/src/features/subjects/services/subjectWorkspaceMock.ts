@@ -1,5 +1,5 @@
-/** 목록 전용 위험 등급 (숫자 클수록 긴급 — 정렬에 사용) */
-export type SubjectRiskLevel = "normal" | "watch" | "high" | "critical";
+/** 목록 전용 위험 등급 (숫자 클수록 긴급 — 정렬에 사용) — 와이어: 정상·관심·주의·위험·긴급 */
+export type SubjectRiskLevel = "normal" | "concern" | "watch" | "high" | "critical";
 
 export interface SubjectListItem {
   readonly id: string;
@@ -27,7 +27,8 @@ export const SUBJECT_RISK_ORDER: Record<SubjectRiskLevel, number> = {
   critical: 0,
   high: 1,
   watch: 2,
-  normal: 3,
+  concern: 3,
+  normal: 4,
 };
 
 export type AlertTimelineLevel = "info" | "warn" | "critical";
@@ -52,7 +53,46 @@ export interface SubjectDetail {
   readonly attachments: readonly { fileName: string; kind: string; uploadedAt: string }[];
 }
 
-export type SubjectDetailView = SubjectListItem & SubjectDetail;
+/** 대상자 상세 와이어프레임 §2 확장 필드 */
+export interface SubjectWireframeExtension {
+  readonly gender: string;
+  readonly vulnerableType: string;
+  readonly aiRiskScore: number;
+  readonly recentAnomaly: string;
+  readonly serviceEnrollmentCount: number;
+  readonly vitalChart: { readonly h24: number[]; readonly d7: number[]; readonly d30: number[] };
+  readonly healthcarePdfs: readonly { readonly id: string; readonly title: string; readonly date: string; readonly summary: string }[];
+  readonly consultations: readonly {
+    readonly at: string;
+    readonly summary: string;
+    readonly emotionLabel: string;
+    readonly emotionScore: number;
+    readonly keywords: readonly string[];
+  }[];
+  readonly aiIntegrated: {
+    readonly gradeLabel: string;
+    readonly totalScore: number;
+    readonly breakdown: {
+      readonly vital: number;
+      readonly health: number;
+      readonly emotion: number;
+      readonly service: number;
+      readonly isolation: number;
+    };
+    readonly rationale: readonly string[];
+    readonly reasons: readonly string[];
+    readonly recommended: readonly string[];
+  };
+  readonly serviceRows: readonly {
+    readonly name: string;
+    readonly start: string;
+    readonly cycle: string;
+    readonly status: string;
+    readonly dupWarning: boolean;
+  }[];
+}
+
+export type SubjectDetailView = SubjectListItem & SubjectDetail & SubjectWireframeExtension;
 
 export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
   {
@@ -61,7 +101,7 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "○○동",
     status: "이용중",
     age: 78,
-    riskLevel: "watch",
+    riskLevel: "concern",
     riskSummary: "실내 CO2 임계 근접",
     activeAlerts: ["CO2 985ppm (권고 900ppm)", "CO2 센서 배터리 41%"],
     lastSignalAt: "11:42",
@@ -307,28 +347,247 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   },
 };
 
+function gradeLabelFromRisk(level: SubjectRiskLevel): string {
+  const m: Record<SubjectRiskLevel, string> = {
+    normal: "정상",
+    concern: "관심",
+    watch: "주의",
+    high: "위험",
+    critical: "긴급",
+  };
+  return m[level];
+}
+
+function aiScoreFromRisk(level: SubjectRiskLevel): number {
+  switch (level) {
+    case "critical":
+      return 94;
+    case "high":
+      return 81;
+    case "watch":
+      return 68;
+    case "concern":
+      return 56;
+    default:
+      return 38;
+  }
+}
+
+function buildWireframeExtension(
+  list: SubjectListItem,
+  detail: SubjectDetail,
+  override?: Partial<SubjectWireframeExtension>,
+): SubjectWireframeExtension {
+  const pdfFromAttach = detail.attachments
+    .filter((f) => /\.pdf$/i.test(f.fileName))
+    .map((f, i) => ({
+      id: `pdf-${list.id}-${i}`,
+      title: f.fileName.replace(/\.pdf$/i, ""),
+      date: f.uploadedAt,
+      summary: `${f.kind} 문서 AI 요약(목업): 주요 수치는 추적 관찰 범위. 이상 소견 시 재검 권고.`,
+    }));
+
+  const healthcarePdfs =
+    pdfFromAttach.length > 0
+      ? pdfFromAttach
+      : [
+          {
+            id: `pdf-ph-${list.id}`,
+            title: "건강검진 결과(샘플)",
+            date: "2026-01-15",
+            summary: "PDF 연동 시 원문 뷰어와 요약을 함께 제공합니다(목업).",
+          },
+        ];
+
+  const defaultConsult = [
+    {
+      at: "2026-03-24 15:20",
+      summary: "일상 대화 위주. 가족 방문 일정에 대한 긍정적 응답.",
+      emotionLabel: "안정",
+      emotionScore: 0.72,
+      keywords: ["가족", "약", "수면"],
+    },
+  ];
+
+  const serviceRows =
+    detail.services.length > 0
+      ? detail.services.map((s) => ({
+          name: s.type,
+          start: detail.serviceStartDate,
+          cycle: "주 2회",
+          status: list.status,
+          dupWarning: list.id === "s1" || list.id === "s6",
+        }))
+      : [
+          {
+            name: "배정 대기",
+            start: "—",
+            cycle: "—",
+            status: list.status,
+            dupWarning: false,
+          },
+        ];
+
+  const base: SubjectWireframeExtension = {
+    gender: "미등록",
+    vulnerableType: "독거·고령",
+    aiRiskScore: aiScoreFromRisk(list.riskLevel),
+    recentAnomaly: list.riskSummary,
+    serviceEnrollmentCount: Math.max(detail.services.length, 1),
+    vitalChart: {
+      h24: [62, 64, 61, 63, 66, 70, 68, 72, 71, 74, 73, 75],
+      d7: [58, 60, 59, 62, 65, 64, 68],
+      d30: [52, 54, 56, 55, 58, 60, 62, 61, 64, 63, 65, 67],
+    },
+    healthcarePdfs,
+    consultations: defaultConsult,
+    aiIntegrated: {
+      gradeLabel: gradeLabelFromRisk(list.riskLevel),
+      totalScore: aiScoreFromRisk(list.riskLevel),
+      breakdown: {
+        vital: Math.floor(aiScoreFromRisk(list.riskLevel) * 0.4),
+        health: Math.floor(aiScoreFromRisk(list.riskLevel) * 0.2),
+        emotion: Math.floor(aiScoreFromRisk(list.riskLevel) * 0.2),
+        service: Math.floor(aiScoreFromRisk(list.riskLevel) * 0.1),
+        isolation: Math.ceil(aiScoreFromRisk(list.riskLevel) * 0.1),
+      },
+      rationale: [
+        `실시간 데이터: ${list.activeAlerts[0] ?? "수신 정상"}`,
+        `건강문서: PDF ${healthcarePdfs.length}건 반영`,
+        "상담: 감정분석·위험문장 탐지",
+        "서비스 이력: 이용·중복 경고(목업)",
+      ],
+      reasons: [list.riskSummary],
+      recommended:
+        list.riskLevel === "critical"
+          ? ["응급 연계", "현장 확인", "보호자 연락"]
+          : list.riskLevel === "high"
+            ? ["전화상담", "방문확인", "보호자 연락"]
+            : list.riskLevel === "watch"
+              ? ["방문확인", "모니터링 강화"]
+              : ["정기 점검 유지"],
+    },
+    serviceRows,
+  };
+
+  if (!override) {
+    return base;
+  }
+  return {
+    ...base,
+    ...override,
+    vitalChart: override.vitalChart ?? base.vitalChart,
+    healthcarePdfs: override.healthcarePdfs ?? base.healthcarePdfs,
+    consultations: override.consultations ?? base.consultations,
+    aiIntegrated: override.aiIntegrated ?? base.aiIntegrated,
+    serviceRows: override.serviceRows ?? base.serviceRows,
+  };
+}
+
+const SUBJECT_WIRE_OVERRIDES: Partial<Record<string, Partial<SubjectWireframeExtension>>> = {
+  s1: {
+    gender: "남",
+    vulnerableType: "호흡기·실내환경 취약",
+    consultations: [
+      {
+        at: "2026-03-24 09:10",
+        summary: "환기 요청 안내에 협조. 밤에 숨이 차다는 표현 1회.",
+        emotionLabel: "다소 불안",
+        emotionScore: 0.44,
+        keywords: ["답답", "환기"],
+      },
+    ],
+  },
+  s2: {
+    gender: "여",
+    vulnerableType: "심혈관·고령",
+    consultations: [
+      {
+        at: "2026-03-25 10:40",
+        summary: "어지럼증 호소. 심박 이상 알림과 시점이 근접.",
+        emotionLabel: "불안",
+        emotionScore: 0.31,
+        keywords: ["어지럽", "심장"],
+      },
+    ],
+    aiIntegrated: {
+      gradeLabel: "위험",
+      totalScore: 81,
+      breakdown: { vital: 30, health: 15, emotion: 20, service: 8, isolation: 8 },
+      rationale: [
+        "실시간: 심박 상한 초과 다발",
+        "건강문서: 혈압 경계 구간(목업)",
+        "상담: 불안·신체 증상 키워드 동시 상승",
+        "서비스: 전화상담·응급연계 병행",
+      ],
+      reasons: ["심박 이상", "상담 불안 키워드"],
+      recommended: ["전화상담", "방문확인", "의료기관 동행 권고"],
+    },
+  },
+  s6: {
+    gender: "여",
+    vulnerableType: "고령·낙상·독거",
+    aiRiskScore: 97,
+    consultations: [
+      {
+        at: "2026-03-25 11:30",
+        summary: "AI 스피커 응답 지연. 마지막 발화 없음(목업).",
+        emotionLabel: "데이터 부족",
+        emotionScore: 0.15,
+        keywords: ["미응답"],
+      },
+    ],
+    aiIntegrated: {
+      gradeLabel: "긴급",
+      totalScore: 97,
+      breakdown: { vital: 38, health: 20, emotion: 15, service: 12, isolation: 12 },
+      rationale: [
+        "실시간: 거실 미활동·응급콜 미응답",
+        "건강문서: 최근 야간 이상 패턴(목업)",
+        "상담: 응답 단절",
+        "서비스: 24h 모니터링·응급 프로토콜",
+      ],
+      reasons: ["활동량 급감", "응급 연락 미응답", "센서 끊김"],
+      recommended: ["응급 연계", "현장 확인", "보호자·119 동시 연락"],
+    },
+  },
+};
+
+const EMPTY_DETAIL: SubjectDetail = {
+  id: "",
+  age: 0,
+  phone: "",
+  address: "",
+  guardian: "",
+  careGrade: "",
+  serviceStartDate: "—",
+  devices: [],
+  realtime: [],
+  healthcareLogs: [],
+  services: [],
+  memos: [],
+  alertTimeline: [],
+  attachments: [],
+};
+
 export function getSubjectDetailMock(subjectId: string): SubjectDetailView | null {
   const listItem = SUBJECT_LIST_MOCK.find((row) => row.id === subjectId);
   if (!listItem) {
     return null;
   }
   const detail = SUBJECT_DETAIL_MOCK[subjectId];
-  if (detail) {
-    return { ...listItem, ...detail };
-  }
-  return {
-    ...listItem,
-    phone: "010-0000-0000",
-    address: `${listItem.district} 상세주소 미등록`,
-    guardian: "보호자 미등록",
-    careGrade: "미등록",
-    serviceStartDate: "—",
-    devices: [],
-    realtime: [],
-    healthcareLogs: [],
-    services: [],
-    memos: [],
-    alertTimeline: [],
-    attachments: [],
-  };
+  const mergedDetail: SubjectDetail = detail
+    ? detail
+    : {
+        ...EMPTY_DETAIL,
+        id: subjectId,
+        age: listItem.age,
+        phone: "010-0000-0000",
+        address: `${listItem.district} 상세주소 미등록`,
+        guardian: "보호자 미등록",
+        careGrade: "미등록",
+        serviceStartDate: "—",
+      };
+  const wire = buildWireframeExtension(listItem, mergedDetail, SUBJECT_WIRE_OVERRIDES[subjectId]);
+  return { ...listItem, ...mergedDetail, ...wire };
 }

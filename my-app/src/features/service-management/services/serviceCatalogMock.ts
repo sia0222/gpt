@@ -14,10 +14,116 @@ export interface WelfareServiceItem {
   readonly name: string;
   readonly targetGroup: string;
   readonly providerType: string;
+  /** 와이어: 대·중·소 표시용 라벨 */
+  readonly tierLarge: string;
+  readonly tierMid: string;
+  readonly tierSmall: string;
+  /** 제공기관명 */
+  readonly providerOrg: string;
+  readonly cycle: string;
   readonly status: "ACTIVE" | "INACTIVE" | "DRAFT";
   readonly enrolledCount: number;
   readonly updatedAt: string;
+  /** 중복위험 플래그(목업) */
+  readonly duplicateRisk: boolean;
 }
+
+/** 대상자별 서비스 매핑 */
+export interface SubjectServiceMappingRow {
+  readonly id: string;
+  readonly subjectName: string;
+  readonly serviceName: string;
+  /** 대·중·소 표시용 경로 */
+  readonly tierPath: string;
+  readonly start: string;
+  readonly end: string;
+  readonly status: string;
+  readonly dupWarning: boolean;
+}
+
+/** 중복위험 분석 유형 */
+export interface DuplicateRiskAnalysisRow {
+  readonly id: string;
+  readonly category: string;
+  readonly detail: string;
+  readonly level: "주의" | "경고" | "차단";
+}
+
+export const SUBJECT_SERVICE_MAPPING_MOCK: readonly SubjectServiceMappingRow[] = [
+  {
+    id: "m1",
+    subjectName: "홍길동",
+    serviceName: "노인 방문요양 (등급별)",
+    tierPath: "복지 · 노인복지 · 방문요양",
+    start: "2024-06-01",
+    end: "—",
+    status: "이용중",
+    dupWarning: true,
+  },
+  {
+    id: "m2",
+    subjectName: "김영희",
+    serviceName: "전화 상담·응급연계",
+    tierPath: "복지 · 노인복지 · 안전확인",
+    start: "2023-11-10",
+    end: "—",
+    status: "이용중",
+    dupWarning: false,
+  },
+  {
+    id: "m3",
+    subjectName: "이민수",
+    serviceName: "주간보호 이용",
+    tierPath: "복지 · 노인복지 · 주간보호",
+    start: "2025-09-01",
+    end: "—",
+    status: "이용중",
+    dupWarning: true,
+  },
+  {
+    id: "m4",
+    subjectName: "최○○",
+    serviceName: "노인 방문요양 (등급별)",
+    tierPath: "복지 · 노인복지 · 방문요양",
+    start: "2024-01-15",
+    end: "2026-04-10",
+    status: "일시중지",
+    dupWarning: true,
+  },
+] as const;
+
+export const DUPLICATE_RISK_ANALYSIS_MOCK: readonly DuplicateRiskAnalysisRow[] = [
+  {
+    id: "d1",
+    category: "동일 목적 중복",
+    detail: "방문요양 + 가사돌봄이 동일 생활영역을 중복 커버하는 사례 6건",
+    level: "경고",
+  },
+  {
+    id: "d2",
+    category: "유사 기능 중복",
+    detail: "전화안부 + AI 스피커 안전 확인이 같은 주기로 중첩",
+    level: "주의",
+  },
+  {
+    id: "d3",
+    category: "예산 중복",
+    detail: "동일 대상자에게 유사 항목으로 2개 기관 예산 집행(목업)",
+    level: "경고",
+  },
+  {
+    id: "d4",
+    category: "기간 중복",
+    detail: "서비스 종료일 미처리 상태로 신규 계약이 겹친 건 2건",
+    level: "주의",
+  },
+  {
+    id: "d5",
+    category: "상충 서비스",
+    detail: "야간 무인 돌봄과 24h 방문이 동시 배정되어 동선 상충",
+    level: "차단",
+  },
+] as const;
 
 export const SERVICE_CATEGORY_TREE: ServiceCategoryNode = {
   id: "cat-welfare",
@@ -59,9 +165,15 @@ export const WELFARE_SERVICES_MOCK: readonly WelfareServiceItem[] = [
     name: "가정위탁 아동 정기 점검",
     targetGroup: "만 18세 미만",
     providerType: "민간 위탁기관",
+    tierLarge: "복지",
+    tierMid: "아동복지",
+    tierSmall: "가정위탁",
+    providerOrg: "○○아동복지위탁센터",
+    cycle: "월 1회",
     status: "ACTIVE",
     enrolledCount: 42,
     updatedAt: "2026-03-24",
+    duplicateRisk: false,
   },
   {
     id: "svc-002",
@@ -70,9 +182,15 @@ export const WELFARE_SERVICES_MOCK: readonly WelfareServiceItem[] = [
     name: "보호시설 입소 연계 상담",
     targetGroup: "위기아동",
     providerType: "시설·센터",
+    tierLarge: "복지",
+    tierMid: "아동복지",
+    tierSmall: "보호시설 연계",
+    providerOrg: "시립○○보호시설",
+    cycle: "수시",
     status: "ACTIVE",
     enrolledCount: 18,
     updatedAt: "2026-03-22",
+    duplicateRisk: true,
   },
   {
     id: "svc-003",
@@ -81,9 +199,15 @@ export const WELFARE_SERVICES_MOCK: readonly WelfareServiceItem[] = [
     name: "노인 방문요양 (등급별)",
     targetGroup: "65세 이상 요양등급자",
     providerType: "방문요양기관",
+    tierLarge: "복지",
+    tierMid: "노인복지",
+    tierSmall: "방문요양",
+    providerOrg: "○○방문요양센터",
+    cycle: "주 3회",
     status: "ACTIVE",
     enrolledCount: 356,
     updatedAt: "2026-03-25",
+    duplicateRisk: true,
   },
   {
     id: "svc-004",
@@ -92,9 +216,15 @@ export const WELFARE_SERVICES_MOCK: readonly WelfareServiceItem[] = [
     name: "주간보호 이용",
     targetGroup: "독거·취약 노인",
     providerType: "주간보호센터",
+    tierLarge: "복지",
+    tierMid: "노인복지",
+    tierSmall: "주간보호",
+    providerOrg: "△△주간보호센터",
+    cycle: "주 5일",
     status: "ACTIVE",
     enrolledCount: 128,
     updatedAt: "2026-03-23",
+    duplicateRisk: true,
   },
   {
     id: "svc-005",
@@ -103,9 +233,15 @@ export const WELFARE_SERVICES_MOCK: readonly WelfareServiceItem[] = [
     name: "장애인 활동지원 급여",
     targetGroup: "등록 장애인",
     providerType: "활동지원기관",
+    tierLarge: "복지",
+    tierMid: "장애인복지",
+    tierSmall: "활동지원",
+    providerOrg: "□□활동지원센터",
+    cycle: "월별 산정",
     status: "DRAFT",
     enrolledCount: 0,
     updatedAt: "2026-03-20",
+    duplicateRisk: false,
   },
 ];
 

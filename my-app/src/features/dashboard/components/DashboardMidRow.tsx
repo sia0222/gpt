@@ -1,162 +1,237 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ALERT_SUMMARY,
-  COLLECTION_TREND,
-  DEVICE_DISTRIBUTION,
-  PRIORITY_SUBJECTS,
-  STATUS_DISTRIBUTION,
+  REALTIME_ALERTS,
+  RISK_TOP_SUBJECTS,
+  type RealtimeAlertItem,
+  type RealtimeAlertKind,
 } from "@/features/dashboard/services/dashboardMockData";
 
-function MiniSparkline() {
-  const max = Math.max(...COLLECTION_TREND);
-  const min = Math.min(...COLLECTION_TREND);
+/* ── 알림 종류별 스타일 ───────────────────────────── */
+const KIND: Record<RealtimeAlertKind, { dot: string; badge: string; badgeText: string }> = {
+  heart:     { dot: "bg-rose-500",   badge: "bg-rose-50",   badgeText: "text-rose-700" },
+  activity:  { dot: "bg-amber-500",  badge: "bg-amber-50",  badgeText: "text-amber-700" },
+  sensor:    { dot: "bg-zinc-400",   badge: "bg-zinc-100",  badgeText: "text-zinc-600" },
+  emergency: { dot: "bg-red-600",    badge: "bg-red-50",    badgeText: "text-red-700" },
+  counsel:   { dot: "bg-purple-500", badge: "bg-purple-50", badgeText: "text-purple-700" },
+};
+
+const GRADE: Record<string, { bg: string; text: string }> = {
+  critical: { bg: "bg-red-600",     text: "text-white" },
+  danger:   { bg: "bg-rose-100",    text: "text-rose-700" },
+  watch:    { bg: "bg-amber-100",   text: "text-amber-700" },
+  concern:  { bg: "bg-sky-100",     text: "text-sky-700" },
+};
+
+/* ── 아바타 컬러 ──────────────────────────────────── */
+const AVATAR_COLORS = [
+  "bg-rose-100 text-rose-700",
+  "bg-blue-100 text-blue-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-amber-100 text-amber-700",
+];
+
+/* ── 조치 다이얼로그 ──────────────────────────────── */
+function ActionDialog({
+  alert,
+  onClose,
+}: {
+  alert: RealtimeAlertItem;
+  onClose: () => void;
+}) {
+  const s = KIND[alert.kind];
   return (
-    <div
-      className="mt-3 flex h-14 items-end gap-0.5"
-      role="img"
-      aria-label="최근 수집 추이 목업 차트"
-    >
-      {COLLECTION_TREND.map((v, i) => {
-        const h = max === min ? 50 : Math.round(((v - min) / (max - min)) * 100);
-        return (
-          <div
-            key={i}
-            className="flex-1 rounded-t bg-gradient-to-t from-blue-200/80 to-blue-500/90"
-            style={{ height: `${Math.max(12, h)}%` }}
-          />
-        );
-      })}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label="닫기"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-zinc-200/60"
+      >
+        <div className="flex items-start gap-3">
+          <div className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", s.badge].join(" ")}>
+            <span className={["h-2.5 w-2.5 rounded-full", s.dot].join(" ")} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[14px] font-bold text-zinc-900">{alert.label}</h2>
+            <p className="mt-0.5 text-[13px] text-zinc-600">{alert.message}</p>
+            <p className="mt-0.5 font-mono text-[11px] text-zinc-400">{alert.time}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600"
+          >
+            <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="mt-4 rounded-xl bg-zinc-50 p-3 text-[11px] leading-relaxed text-zinc-500">
+          실제 연동 시 조치 유형·메모가 저장되고 이력에 반영됩니다.
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          {alert.subjectId && (
+            <Link
+              to={`/subjects/${alert.subjectId}`}
+              className="h-8 rounded-lg border border-zinc-200 px-3 text-[12px] font-medium text-zinc-600 leading-8 transition hover:bg-zinc-50"
+              onClick={onClose}
+            >
+              대상자 상세
+            </Link>
+          )}
+          <button
+            type="button"
+            className="h-8 rounded-lg bg-zinc-800 px-4 text-[12px] font-semibold text-white transition hover:bg-zinc-700"
+            onClick={onClose}
+          >
+            조치 완료
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
+/* ── 메인 컴포넌트 ────────────────────────────────── */
 export function DashboardMidRow() {
+  const [dialogAlert, setDialogAlert] = useState<RealtimeAlertItem | null>(null);
+
   return (
-    <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <div className="dash-card p-4 sm:p-5 lg:col-span-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[13px] font-semibold text-zinc-900">우선 조치 대상자</h2>
-          <Link
-            to="/subjects"
-            className="text-[12px] font-medium text-blue-600 hover:text-blue-700"
-          >
-            전체
-          </Link>
-        </div>
-        <ol className="mt-4 space-y-2">
-          {PRIORITY_SUBJECTS.map((row, i) => (
-            <li key={row.id}>
-              <Link
-                to="/subjects"
-                className="flex gap-3 rounded-xl border border-transparent px-2 py-2 transition hover:border-zinc-100 hover:bg-zinc-50"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-[12px] font-bold text-zinc-500">
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900">{row.name}</p>
-                  <p className="truncate text-[12px] text-zinc-500">
-                    {row.status} · {row.detail}
-                  </p>
-                  <p className="text-[11px] text-zinc-400">{row.assignee}</p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <div className="dash-card p-4 sm:p-5 lg:col-span-5">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[13px] font-semibold text-zinc-900">실시간 관제 요약</h2>
-          <Link to="/monitoring" className="text-[12px] font-medium text-blue-600 hover:text-blue-700">
-            통합 관제
-          </Link>
-        </div>
-        <div className="mt-4 grid gap-6 sm:grid-cols-2">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              대상자 상태
-            </p>
-            <div className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-zinc-100">
-              {STATUS_DISTRIBUTION.map((s) => (
-                <div
-                  key={s.label}
-                  className={s.color}
-                  style={{ width: `${s.pct}%` }}
-                  title={`${s.label} ${s.pct}%`}
-                />
-              ))}
+    <>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* ── 좌: 위험대상자 TOP ───────────────── */}
+        <div className="flex flex-col rounded-2xl border border-zinc-200/70 bg-white shadow-sm lg:col-span-5">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-rose-500" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1.314C12.438-3.248 23.534 4.736 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+              </svg>
+              <h2 className="text-[13px] font-semibold text-zinc-800">위험대상자 TOP</h2>
+              <span className="rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                {RISK_TOP_SUBJECTS.length}
+              </span>
             </div>
-            <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-600">
-              {STATUS_DISTRIBUTION.map((s) => (
-                <li key={s.label} className="inline-flex items-center gap-1">
-                  <span className={`h-1.5 w-1.5 rounded-full ${s.color}`} />
-                  {s.label} {s.pct}%
-                </li>
-              ))}
-            </ul>
+            <Link
+              to="/subjects?kpi=danger"
+              className="text-[11px] font-medium text-zinc-400 transition hover:text-zinc-700"
+            >
+              전체 보기 →
+            </Link>
           </div>
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              기기 유형
-            </p>
-            <ul className="mt-2 space-y-2">
-              {DEVICE_DISTRIBUTION.map((d) => (
-                <li key={d.label} className="flex items-center gap-2 text-[12px]">
-                  <span className="w-[4.5rem] truncate text-zinc-600">{d.label}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-zinc-500 to-zinc-700"
-                      style={{ width: `${d.pct}%` }}
-                    />
-                  </div>
-                  <span className="w-8 text-right text-[11px] tabular-nums text-zinc-500">
-                    {d.pct}%
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="mt-4 rounded-xl bg-zinc-50/80 p-3 ring-1 ring-zinc-100/80">
-          <p className="text-[11px] font-medium text-zinc-500">최근 1시간 수집 추이 (목업)</p>
-          <MiniSparkline />
-        </div>
-        <Link
-          to="/subjects"
-          className="mt-3 inline-flex text-[12px] font-medium text-blue-600 hover:text-blue-700"
-        >
-          대상자 상세로 →
-        </Link>
-      </div>
 
-      <div className="dash-card p-4 sm:p-5 lg:col-span-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[13px] font-semibold text-zinc-900">알림 · 장애</h2>
-          <Link to="/monitoring" className="text-[12px] font-medium text-blue-600 hover:text-blue-700">
-            로그
-          </Link>
-        </div>
-        <div className="mt-4 space-y-2">
-          <div className="rounded-xl bg-gradient-to-br from-rose-50 to-white px-3 py-3 ring-1 ring-rose-100/80">
-            <p className="text-[12px] font-semibold text-rose-900">긴급 {ALERT_SUMMARY.critical}건</p>
-            <p className="text-[11px] text-rose-700/90">즉시 확인 권장</p>
+          <div className="flex flex-col divide-y divide-zinc-50">
+            {RISK_TOP_SUBJECTS.map((row, i) => {
+              const grade = GRADE[row.gradeLevel] ?? GRADE.concern;
+              return (
+                <Link
+                  key={row.id}
+                  to={`/subjects/${row.id}`}
+                  className="flex items-center gap-3 px-5 py-3 transition hover:bg-zinc-50/80"
+                >
+                  {/* 아바타 */}
+                  <div
+                    className={[
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold",
+                      AVATAR_COLORS[i % AVATAR_COLORS.length],
+                    ].join(" ")}
+                  >
+                    {row.avatar}
+                  </div>
+
+                  {/* 정보 */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-semibold text-zinc-800">{row.name}</span>
+                      <span
+                        className={[
+                          "rounded px-1.5 py-0.5 text-[9px] font-bold leading-none",
+                          grade.bg,
+                          grade.text,
+                        ].join(" ")}
+                      >
+                        {row.gradeLabel}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-zinc-500">{row.reason}</p>
+                  </div>
+
+                  {/* 시각·담당자 */}
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono text-[11px] font-medium text-zinc-600">{row.occurredAt}</p>
+                    <p className="text-[10px] text-zinc-400">{row.assignee}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-          <div className="rounded-xl bg-gradient-to-br from-amber-50 to-white px-3 py-3 ring-1 ring-amber-100/80">
-            <p className="text-[12px] font-semibold text-amber-900">주의 {ALERT_SUMMARY.warning}건</p>
-            <p className="text-[11px] text-amber-800/90">배치 처리 가능</p>
+        </div>
+
+        {/* ── 우: 실시간 이벤트 피드 ────────────── */}
+        <div className="flex flex-col rounded-2xl border border-zinc-200/70 bg-white shadow-sm lg:col-span-7">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-blue-500" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 16a2 2 0 001.985-1.75H6.015A2 2 0 008 16zm.995-14.42a1 1 0 10-1.99 0A5 5 0 003 6.5c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.92z"/>
+              </svg>
+              <h2 className="text-[13px] font-semibold text-zinc-800">실시간 이벤트</h2>
+              {/* Live indicator */}
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-50" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+              </span>
+            </div>
+            <span className="text-[10px] text-zinc-400">클릭 시 조치등록</span>
+          </div>
+
+          <div className="flex flex-col divide-y divide-zinc-50">
+            {REALTIME_ALERTS.map((ev) => {
+              const k = KIND[ev.kind];
+              return (
+                <button
+                  key={ev.id}
+                  type="button"
+                  className="flex items-start gap-3 px-5 py-3 text-left transition hover:bg-zinc-50/80"
+                  onClick={() => setDialogAlert(ev)}
+                >
+                  <span className={["timeline-dot mt-1.5", k.dot].join(" ")} />
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={[
+                        "inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight",
+                        k.badge,
+                        k.badgeText,
+                      ].join(" ")}
+                    >
+                      {ev.label}
+                    </span>
+                    <p className="mt-0.5 text-[12px] text-zinc-700">{ev.message}</p>
+                  </div>
+                  <span className="shrink-0 font-mono text-[11px] text-zinc-400 mt-0.5">{ev.time}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-zinc-100 px-5 py-2.5">
+            <button
+              type="button"
+              className="w-full rounded-lg border border-zinc-200 py-1.5 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-50"
+            >
+              이벤트 로그 전체 보기
+            </button>
           </div>
         </div>
-        <p className="mt-4 text-[11px] font-medium text-zinc-400">최근 장애</p>
-        <ul className="mt-1 space-y-1 text-[12px] text-zinc-600">
-          {ALERT_SUMMARY.incidents.map((t) => (
-            <li key={t} className="border-l-2 border-zinc-200 pl-2">
-              {t}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+      </section>
+
+      {dialogAlert && <ActionDialog alert={dialogAlert} onClose={() => setDialogAlert(null)} />}
+    </>
   );
 }
