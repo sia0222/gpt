@@ -58,6 +58,7 @@ const TAB_DEFS = [
   { id: "devices", label: "스마트 디바이스 관제" },
   { id: "counseling", label: "상담 이력" },
   { id: "service", label: "서비스 이력" },
+  { id: "healthcare", label: "헬스케어 기록" },
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
@@ -72,6 +73,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
   const baseId = useId();
   const [active, setActive] = useState<TabId>("devices");
   const [deviceTab, setDeviceTab] = useState<string>("carero");
+  const [pdfOpen, setPdfOpen] = useState<{ title: string; summary: string } | null>(null);
 
   // Filter the mock services for the current subject (fallback to all if mock doesn't match well)
   const myServices = SUBJECT_SERVICE_MAPPING_MOCK.filter(m => m.subjectName === subject.name).length > 0 
@@ -79,7 +81,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
     : SUBJECT_SERVICE_MAPPING_MOCK.slice(0, 3);
 
   return (
-    <div className="flex flex-col h-full min-h-[500px] bg-zinc-50/30">
+    <div className="flex flex-col bg-zinc-50/30">
       <div className="flex gap-2 border-b border-zinc-200 bg-white px-6 pt-4" role="tablist">
         {TAB_DEFS.map((tab) => {
           const isActive = tab.id === active;
@@ -181,14 +183,14 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
                     { label: "응급 호출기 (SOS)", status: IOT_MOCK.sos.status, safe: true, icon: "🚨", battery: IOT_MOCK.sos.battery },
                   ].map(s => (
                      <div key={s.label} className="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm h-32 hover:border-emerald-300 transition-colors">
-                       <div className="flex justify-between items-start">
-                         <span className="text-[20px] bg-zinc-50 p-1.5 rounded-xl border border-zinc-100">{s.icon}</span>
-                         <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded font-bold text-zinc-400">Bat: {s.battery}</span>
-                       </div>
-                       <div>
-                         <p className="text-[11px] font-extrabold text-zinc-500 tracking-widest">{s.label}</p>
-                         <p className={["text-[14px] font-bold mt-1", s.safe ? "text-emerald-700" : "text-rose-600"].join(" ")}>{s.status}</p>
-                       </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-[20px] bg-zinc-50 p-1.5 rounded-xl border border-zinc-100">{s.icon}</span>
+                          <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded font-bold text-zinc-400">Bat: {s.battery}</span>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-extrabold text-zinc-500 tracking-widest">{s.label}</p>
+                          <p className={["text-[14px] font-bold mt-1", s.safe ? "text-emerald-700" : "text-rose-600"].join(" ")}>{s.status}</p>
+                        </div>
                      </div>
                   ))}
                 </div>
@@ -332,9 +334,9 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
           </div>
         </div>
 
-        {/* === 2. 상담 이력 (이전: 알림 타임라인·메모) === */}
+        {/* === 2. 상담 이력 === */}
         <div hidden={active !== "counseling"} className="animate-in fade-in duration-300">
-           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col h-[500px]">
+           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col">
              <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-6 items-center justify-between shrink-0">
                <div>
                   <h3 className="text-[16px] font-extrabold text-zinc-900 flex items-center gap-2">
@@ -350,11 +352,11 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
                </button>
              </div>
              
-             <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/30">
+             <div className="flex-1 p-6 bg-zinc-50/30">
                {subject.consultations.length === 0 ? (
                  <div className="flex items-center justify-center p-10 text-zinc-400 text-[13px]">상담 이력이 존재하지 않습니다.</div>
                ) : (
-                 <div className="grid gap-4 lg:grid-cols-2">
+                 <div className="grid gap-4 lg:grid-cols-1 xl:grid-cols-2">
                    {subject.consultations.map((c, i) => (
                      <article key={i} className="rounded-2xl border border-zinc-200/70 bg-white p-5 shadow-sm hover:shadow-md transition-shadow group flex flex-col">
                        <div className="flex justify-between items-start mb-3">
@@ -376,7 +378,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
                        
                        <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
                          <div className="flex items-center gap-2 text-[11px]">
-                           <span className="text-zinc-400 shrink-0 font-bold">감출 키워드</span>
+                           <span className="text-zinc-400 shrink-0 font-bold">검출 키워드</span>
                            <div className="flex flex-wrap gap-1.5">
                              {c.keywords.length > 0 ? c.keywords.map(kw => (
                                <span key={kw} className="bg-white text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded shadow-sm font-bold">
@@ -397,9 +399,9 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
            </div>
         </div>
 
-        {/* === 3. 서비스 이력 (이전: 행정 서비스 및 문서) === */}
+        {/* === 3. 서비스 이력 === */}
         <div hidden={active !== "service"} className="animate-in fade-in duration-300">
-           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col h-[500px]">
+           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col">
              <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-6 items-center justify-between shrink-0">
                <div>
                   <h3 className="text-[16px] font-extrabold text-zinc-900 flex items-center gap-2">
@@ -447,7 +449,101 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
              </div>
            </div>
         </div>
+
+        {/* === 4. 헬스케어 기록 (신규) === */}
+        <div hidden={active !== "healthcare"} className="animate-in fade-in duration-300">
+           <div className="bg-white rounded-3xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col">
+             <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-6 items-center justify-between shrink-0">
+               <div>
+                  <h3 className="text-[16px] font-extrabold text-zinc-900 flex items-center gap-2">
+                     <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                     기기별 헬스케어 측정 분석 기록 (PDF)
+                  </h3>
+                  <p className="text-[12px] font-medium text-zinc-500 mt-1">4종 스마트 기기에서 수집된 건강 데이터를 기반으로 생성된 상세 분석 리포트입니다.</p>
+               </div>
+             </div>
+
+             <div className="flex-1 p-6 bg-zinc-50/30">
+                <div className="grid gap-5 md:grid-cols-2">
+                  {subject.healthcarePdfs.map((pdf) => (
+                    <div key={pdf.id} className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm hover:shadow-md transition-all flex flex-col">
+                       <div className="flex items-start justify-between mb-4">
+                         <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                         </div>
+                         <time className="text-[11px] font-mono font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded border border-zinc-100">{pdf.date}</time>
+                       </div>
+                       <h4 className="text-[14px] font-extrabold text-zinc-900 leading-tight mb-2">{pdf.title}</h4>
+                       <div className="flex-1 bg-zinc-50/80 p-3 rounded-xl border border-zinc-100 mb-4">
+                          <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest block mb-1">AI 핵심 요약</span>
+                          <p className="text-[12px] font-medium text-zinc-600 leading-relaxed">{pdf.summary}</p>
+                       </div>
+                       <button
+                         type="button"
+                         onClick={() => setPdfOpen({ title: pdf.title, summary: pdf.summary })}
+                         className="w-full flex items-center justify-center gap-2 h-9 rounded-lg border border-zinc-200 bg-white text-[12px] font-bold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-colors shadow-sm"
+                       >
+                         <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                         상세 리포트 보기 (PDF)
+                       </button>
+                    </div>
+                  ))}
+                </div>
+             </div>
+           </div>
+        </div>
       </div>
+
+      {/* PDF 모달 (통합) */}
+      {pdfOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm transition-opacity"
+            aria-label="닫기"
+            onClick={() => setPdfOpen(null)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`${baseId}-pdf-title`}
+            className="relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl overflow-hidden flex flex-col h-[80vh]"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-4 shrink-0">
+              <h2 id={`${baseId}-pdf-title`} className="text-[16px] font-bold text-zinc-900">
+                {pdfOpen.title} (가상 뷰어)
+              </h2>
+              <button
+                type="button"
+                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition"
+                onClick={() => setPdfOpen(null)}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-6 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 rounded-xl my-4 text-center px-4">
+              <svg className="w-12 h-12 text-zinc-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-[14px] font-bold text-zinc-700">문서 원문 렌더링 영역</p>
+              <p className="text-[12px] text-zinc-500 mt-1 max-w-sm leading-relaxed">추후 백엔드에서 원문 PDF/이미지 URL을 받아올 경우, 이곳에 PDF.js 등 뷰어가 삽입됩니다.</p>
+            </div>
+
+            <div className="shrink-0 bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+              <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                AI 분석 제언
+              </p>
+              <p className="text-[13px] font-medium leading-relaxed text-zinc-800">{pdfOpen.summary}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

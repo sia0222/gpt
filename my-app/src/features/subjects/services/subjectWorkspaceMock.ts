@@ -378,26 +378,33 @@ function buildWireframeExtension(
   detail: SubjectDetail,
   override?: Partial<SubjectWireframeExtension>,
 ): SubjectWireframeExtension {
-  const pdfFromAttach = detail.attachments
-    .filter((f) => /\.pdf$/i.test(f.fileName))
-    .map((f, i) => ({
-      id: `pdf-${list.id}-${i}`,
-      title: f.fileName.replace(/\.pdf$/i, ""),
-      date: f.uploadedAt,
-      summary: `${f.kind} 문서 AI 요약(목업): 주요 수치는 추적 관찰 범위. 이상 소견 시 재검 권고.`,
-    }));
+  const healthcarePdfs = [
+    {
+      id: `pdf-bp-${list.id}`,
+      title: "전자 혈압계 (최신 측정)",
+      date: "2026-03-28",
+      summary: "수축기 132/85mmHg. 최근 7일 평균 대비 안정적이나 아침 기상 직후 수치 관산 필요.",
+    },
+    {
+      id: `pdf-bs-${list.id}`,
+      title: "연속 혈당계 (분석 보고서)",
+      date: "2026-03-29",
+      summary: "평균 혈당 115mg/dL. 식후 피크 수치가 낮아지고 있으며 야간 저혈당 징후 없음.",
+    },
+    {
+      id: `pdf-ws-${list.id}`,
+      title: "스마트 체중계 (체성분)",
+      date: "2026-03-25",
+      summary: "체중 67.8kg. 체수분량 정상 범위이며, 근육량 감소 방지를 위한 단백질 섭취 권장.",
+    },
+    {
+      id: `pdf-act-${list.id}`,
+      title: "활동량계 (활동 추적)",
+      date: "2026-03-31",
+      summary: "일 평균 5,200보. 수면 효율 85%로 양호하나 새벽 시간대 동요 2회 감지됨.",
+    },
+  ];
 
-  const healthcarePdfs =
-    pdfFromAttach.length > 0
-      ? pdfFromAttach
-      : [
-          {
-            id: `pdf-ph-${list.id}`,
-            title: "건강검진 결과(샘플)",
-            date: "2026-01-15",
-            summary: "PDF 연동 시 원문 뷰어와 요약을 함께 제공합니다(목업).",
-          },
-        ];
 
   const defaultConsult = [
     {

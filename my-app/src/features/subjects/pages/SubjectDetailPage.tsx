@@ -1,5 +1,4 @@
 import { Link, useParams } from "react-router-dom";
-import { PageHeader } from "@/features/admin-shell";
 import { SubjectIntegratedProfile } from "@/features/subjects/components/SubjectIntegratedProfile";
 import { SubjectDetailTabs } from "@/features/subjects/components/SubjectDetailTabs";
 import { getSubjectDetailMock } from "@/features/subjects/services/subjectWorkspaceMock";
@@ -24,38 +23,9 @@ export function SubjectDetailPage() {
     );
   }
 
-  const urgentTone = subject.riskLevel === "critical" || subject.riskLevel === "high";
 
   return (
-    <div className="flex flex-col gap-5 pb-12">
-      {/* ── 긴급 알림 배너 ── */}
-      {subject.activeAlerts.length > 0 && (
-        <div
-          className={[
-            "flex items-start gap-4 rounded-xl border p-4 shadow-sm",
-            urgentTone ? "border-rose-300 bg-rose-50" : "border-amber-300 bg-amber-50",
-          ].join(" ")}
-          role="region"
-          aria-label="활성 알림"
-        >
-          <div className={["flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-extrabold text-white shadow-inner", urgentTone ? "bg-rose-500" : "bg-amber-500"].join(" ")}>
-            !
-          </div>
-          <div className="flex-1">
-            <h3 className={["text-[14px] font-bold tracking-wide", urgentTone ? "text-rose-900" : "text-amber-900"].join(" ")}>
-              대상자 활성 알림 및 이슈
-            </h3>
-            <ul className={["mt-1.5 space-y-1 text-[13px] font-medium", urgentTone ? "text-rose-800" : "text-amber-800"].join(" ")}>
-              {subject.activeAlerts.map((a) => (
-                <li key={a} className="flex gap-2 items-center">
-                  <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-current opacity-60"></span>
-                  {a}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+    <div className="flex flex-col gap-6 pb-12">
 
       {/* ── 간소화된 개인정보 헤더 ── */}
       <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
@@ -123,20 +93,27 @@ export function SubjectDetailPage() {
         </div>
       </div>
 
-      <SubjectIntegratedProfile subject={subject} />
+      {/* ── 2컬럼 본문 영역 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* 좌측: 상세 이력 (Wider) */}
+        <section className="lg:col-span-3 rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex flex-col overflow-hidden" aria-labelledby="subject-history-title">
+          <div className="border-b border-zinc-100 bg-zinc-50/50 p-5 shrink-0">
+            <h2 id="subject-history-title" className="text-[15px] font-bold text-zinc-900 flex items-center gap-2">
+              <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+              </svg>
+              상세 이력
+            </h2>
+            <p className="text-[12px] text-zinc-500 mt-1 pl-6">디바이스 관제, 상담, 서비스 및 헬스케어 리포트 통합 이력입니다.</p>
+          </div>
+          <SubjectDetailTabs subject={subject} />
+        </section>
 
-      <section className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex flex-col overflow-hidden" aria-labelledby="subject-extra-tabs">
-        <div className="border-b border-zinc-100 bg-zinc-50/50 p-5">
-          <h2 id="subject-extra-tabs" className="text-[15px] font-bold text-zinc-900 flex items-center gap-2">
-            <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-            </svg>
-            상세 이력 및 행정 정보
-          </h2>
-          <p className="text-[12px] text-zinc-500 mt-1 pl-6">기기 연결 상태, 과거 조치 타임라인 및 서비스 원장 내역입니다.</p>
+        {/* 우측: AI 분석 결과 (Narrower) */}
+        <div className="lg:col-span-1">
+          <SubjectIntegratedProfile subject={subject} />
         </div>
-        <SubjectDetailTabs subject={subject} />
-      </section>
+      </div>
     </div>
   );
 }
