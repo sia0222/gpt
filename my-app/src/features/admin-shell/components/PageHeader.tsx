@@ -57,7 +57,7 @@ export function PageHeader({
   return (
     <header className={["flex flex-col gap-4", className].filter(Boolean).join(" ")}>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex min-w-[280px] flex-1 items-start gap-3">
+        <div className="flex min-w-[280px] flex-1 items-start gap-4">
           {backPath ? (
             <Link
               to={backPath}

@@ -25,17 +25,7 @@ const CARERO_CHART_DATA = [
   { time: "12", temp: 24.5, humid: 42 }, { time: "13", temp: 24.5, humid: 42 },
 ];
 
-// 2. 스마트밴드 MOCK
-const BAND_MOCK = {
-  heartRate: { current: 72, min: 61, max: 110, status: "안정" },
-  spo2: { current: 98, status: "정상" },
-  steps: { current: 3200, goal: 5000 },
-  sleep: { total: "6h 20m", deep: "1h 40m", light: "4h 40m", score: 78 },
-  battery: "82%",
-  syncTime: "2026-04-01 13:15"
-};
-
-// 3. IoT 센서 MOCK
+// 2. IoT 센서 MOCK
 const IOT_MOCK = {
   fire: { status: "안전", battery: "90%" },
   gas: { status: "안전", battery: "85%" },
@@ -44,7 +34,7 @@ const IOT_MOCK = {
   syncTime: "2026-04-01 13:20"
 };
 
-// 4. AI 스피커 MOCK
+// 3. AI 스피커 MOCK
 const AI_SPEAKER_MOCK = {
   talkCount: 14,
   emotion: { positive: 25, neutral: 65, negative: 10 },
@@ -63,7 +53,6 @@ const TAB_DEFS = [
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
 const DEVICE_TABS = [
-  { id: "band", name: "스마트밴드", icon: "⌚" },
   { id: "iot", name: "단독 IoT 센서", icon: "🏠" },
   { id: "speaker", name: "AI 스피커", icon: "🎙️" },
   { id: "carero", name: "케어로 통합돌봄", icon: "🤖" },
@@ -98,7 +87,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
       </div>
 
       <div className="flex-1 bg-zinc-50 p-6 relative">
-        {/* === 1. 기기 및 센서: 4대 스마트 디바이스 관제 === */}
+        {/* === 1. 기기 및 센서: 스마트 디바이스 관제 === */}
         <div hidden={active !== "devices"} className="animate-in fade-in duration-300">
           
           <div className="flex bg-zinc-200/50 p-1.5 rounded-2xl w-fit mb-6 shadow-inner border border-zinc-200/50">
@@ -114,56 +103,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
 
           {/* Device Tab Contexts */}
           <div className="bg-white rounded-3xl border border-zinc-200/70 p-6 shadow-sm overflow-hidden min-h-[400px]">
-            {/* 1. 스마트밴드 뷰 */}
-            {deviceTab === "band" && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className="flex justify-between items-end mb-6 border-b border-zinc-100 pb-4">
-                  <div>
-                    <h3 className="text-[17px] font-extrabold text-zinc-900">손목형 스마트밴드 (바이탈/활동)</h3>
-                    <p className="text-[12px] font-medium text-zinc-500 mt-1">실시간 생체 및 활동량 데이터 스트리밍</p>
-                  </div>
-                  <div className="flex items-center gap-4 text-[11px] font-bold text-zinc-600">
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 rounded-lg border border-zinc-200"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 배터리 {BAND_MOCK.battery}</span>
-                    <span className="text-zinc-400">동기화: {BAND_MOCK.syncTime}</span>
-                  </div>
-                </div>
-                <div className="grid gap-6 lg:grid-cols-3">
-                  <div className="rounded-2xl bg-zinc-50 p-5 border border-zinc-100 flex flex-col justify-center">
-                    <p className="text-[12px] font-extrabold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span className="text-rose-500">❤</span> 심박수 (HR)</p>
-                    <div className="flex items-end gap-2">
-                       <span className="text-[40px] font-black leading-none text-zinc-900 tabnum">{BAND_MOCK.heartRate.current}</span>
-                       <span className="text-[13px] font-bold text-zinc-400 pb-1.5">bpm</span>
-                    </div>
-                    <div className="mt-4 flex gap-3 text-[12px] font-bold text-zinc-600">
-                      <span className="bg-white px-2.5 py-1 rounded border border-zinc-200 shadow-sm">최저 {BAND_MOCK.heartRate.min}</span>
-                      <span className="bg-white px-2.5 py-1 rounded border border-zinc-200 shadow-sm">최고 {BAND_MOCK.heartRate.max}</span>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-zinc-50 p-5 border border-zinc-100">
-                     <p className="text-[12px] font-extrabold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2">👣 활동량 (걸음)</p>
-                     <div className="flex items-end justify-between mt-3">
-                        <span className="text-[28px] font-black leading-none text-zinc-900 tabnum">{BAND_MOCK.steps.current.toLocaleString()}</span>
-                        <span className="text-[12px] font-bold text-zinc-500 tracking-wide">/ {BAND_MOCK.steps.goal.toLocaleString()} 걸음</span>
-                     </div>
-                     <div className="w-full h-2.5 bg-zinc-200 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(BAND_MOCK.steps.current/BAND_MOCK.steps.goal)*100}%` }}></div>
-                     </div>
-                  </div>
-                  <div className="rounded-2xl bg-zinc-50 p-5 border border-zinc-100">
-                     <p className="text-[12px] font-extrabold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2">💤 야간 수면 패턴</p>
-                     <div className="flex items-center gap-4 mt-3">
-                       <div className="w-16 h-16 rounded-full border-4 border-indigo-100 flex items-center justify-center text-[16px] font-black text-indigo-900">{BAND_MOCK.sleep.score}점</div>
-                       <div className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-600 flex-1">
-                          <div className="flex justify-between bg-white px-2.5 py-1.5 rounded-lg shadow-sm border border-zinc-100"><span>총 수면</span> <span className="text-zinc-900">{BAND_MOCK.sleep.total}</span></div>
-                          <div className="flex justify-between bg-white px-2.5 py-1.5 rounded-lg shadow-sm border border-zinc-100"><span>깊은 수면</span> <span className="text-indigo-700">{BAND_MOCK.sleep.deep}</span></div>
-                       </div>
-                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 2. 단독 IoT 뷰 */}
+            {/* 1. 단독 IoT 뷰 */}
             {deviceTab === "iot" && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <div className="flex justify-between items-end mb-6 border-b border-zinc-100 pb-4">
@@ -197,7 +137,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
               </div>
             )}
 
-            {/* 3. AI 스피커 뷰 */}
+            {/* 2. AI 스피커 뷰 */}
             {deviceTab === "speaker" && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                  <div className="flex justify-between items-end mb-6 border-b border-zinc-100 pb-4">
@@ -244,7 +184,7 @@ export function SubjectDetailTabs({ subject }: { readonly subject: SubjectDetail
               </div>
             )}
 
-            {/* 4. 케어로 뷰 (이전 구현물 이식) */}
+            {/* 3. 케어로 뷰 (이전 구현물 이식) */}
             {deviceTab === "carero" && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                  <div className="flex justify-between items-end mb-6 border-b border-zinc-100 pb-4">
