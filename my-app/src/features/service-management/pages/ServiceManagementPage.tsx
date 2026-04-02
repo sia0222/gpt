@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PageHeader } from "@/features/admin-shell";
+import { PageHeader, PageHeaderAction, PlusIcon, ManagementKpiRow } from "@/features/admin-shell";
 import {
   DUPLICATE_RISK_ANALYSIS_MOCK,
   SERVICE_AUDIT_LOG_MOCK,
@@ -76,7 +76,7 @@ function CategoryTreeItem({
           {svcCount > 0 && (
             <span
               className={[
-                "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                "shrink-0 rounded px-1.5 py-0.5 text-[12px] font-black tabular-nums",
                 isSelected ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-600",
               ].join(" ")}
             >
@@ -187,63 +187,52 @@ export function ServiceManagementPage() {
         eyebrow="OVERVIEW · 서비스 관리 및 통제"
         title="서비스 관리 및 통제"
         aside={
-          <button type="button" className="h-10 rounded-xl px-5 text-[13px] font-extrabold text-white bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all outline-none flex items-center justify-center gap-2 active:scale-95">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            신규 서비스 등록
-          </button>
-        }
-        footer={
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mt-2">
-            <div className="rounded-xl border border-zinc-200/70 bg-white p-4 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">전체 서비스</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-zinc-900">{globalStats.total}</p>
-            </div>
-            <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-4 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">운영 중 (ACTIVE)</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-emerald-900">{globalStats.active}</p>
-            </div>
-            <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">검수 대기 (DRAFT)</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-amber-900">{globalStats.draft}</p>
-            </div>
-            <div className="rounded-xl border border-blue-200/80 bg-blue-50/50 p-4 shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-700">총 이용자 배정</p>
-              <p className="mt-1.5 text-2xl font-extrabold tabular-nums text-blue-900">{globalStats.enrolledSum.toLocaleString("ko-KR")}명</p>
-            </div>
-          </div>
+          <PageHeaderAction onClick={() => alert("신규 서비스 등록")}>
+            <PlusIcon />
+            등록
+          </PageHeaderAction>
         }
       />
 
+      <section aria-label="서비스 운영 상태 지표">
+        <ManagementKpiRow items={[
+          { id: "svc-total", label: "전체 서비스", value: globalStats.total.toLocaleString(), color: "zinc", icon: "bell", sparkline: [110, 115, 112, 118, 120, 122, globalStats.total], delta: "+2 (전주 대비)" },
+          { id: "svc-active", label: "운영 중 (ACTIVE)", value: globalStats.active.toLocaleString(), color: "emerald", icon: "monitor", sentiment: "positive", sparkline: [95, 98, 97, 100, 102, 105, globalStats.active], delta: "+3%p" },
+          { id: "svc-draft", label: "검수 대기 (DRAFT)", value: globalStats.draft.toLocaleString(), color: "amber", icon: "alert", sentiment: "negative", sparkline: [5, 8, 12, 10, 14, 11, globalStats.draft], delta: "+2 (신규)" },
+          { id: "svc-enrolled", label: "총 이용자 배정", value: globalStats.enrolledSum.toLocaleString(), color: "blue", icon: "people", sentiment: "positive", sparkline: [4200, 4350, 4500, 4420, 4600, 4780, globalStats.enrolledSum], delta: "+156명" }
+        ]} />
+      </section>
+
       {/* Global Filter Grid */}
       <div className="rounded-2xl border border-zinc-200/70 bg-white p-6 shadow-sm flex flex-col xl:flex-row xl:items-end gap-5">
-        <h2 className="text-[14px] font-bold text-zinc-900 xl:w-24 shrink-0 mt-0.5 xl:mt-0 pt-2.5">검색 필터</h2>
+        <h2 className="text-[15px] font-extrabold text-zinc-900 xl:w-24 shrink-0 mt-0.5 xl:mt-0 pt-2.5">검색 필터</h2>
         <div className="flex flex-wrap items-end gap-3 flex-1">
-          <label className="flex flex-col gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wide">
+          <label className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-500 uppercase tracking-wide">
             대분류
             <select className="min-w-[7rem] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-[13px] text-zinc-800 font-medium focus:ring-2 outline-none h-10" value={tierLarge} onChange={(e) => { setTierLarge(e.target.value); setTierMid("all"); setTierSmall("all"); }}>
               <option value="all">전체</option>
               {TIER_LARGE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wide">
+          <label className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-500 uppercase tracking-wide">
             중분류
             <select className="min-w-[7.5rem] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-[13px] text-zinc-800 font-medium focus:ring-2 outline-none h-10" value={tierMid} onChange={(e) => { setTierMid(e.target.value); setTierSmall("all"); }}>
               <option value="all">전체</option>
               {midOptions.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wide">
+          <label className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-500 uppercase tracking-wide">
             소분류
             <select className="min-w-[7.5rem] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-[13px] text-zinc-800 font-medium focus:ring-2 outline-none h-10" value={tierSmall} onChange={(e) => setTierSmall(e.target.value)}>
               <option value="all">전체</option>
               {smallOptions.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wide">
+          <label className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-500 uppercase tracking-wide">
             제공기관
             <input type="search" value={providerOrgQ} onChange={(e) => setProviderOrgQ(e.target.value)} placeholder="기관명 입력" className="min-w-[9rem] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-[13px] text-zinc-800 focus:bg-white focus:ring-2 outline-none h-10" autoComplete="off" />
           </label>
-          <label className="flex flex-col gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wide">
+          <label className="flex flex-col gap-1.5 text-[12px] font-bold text-zinc-500 uppercase tracking-wide">
             중복위험 분류 필터
             <select className="min-w-[8rem] rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900 font-bold focus:ring-2 outline-none h-10" value={dupFilter} onChange={(e) => setDupFilter(e.target.value as DupFilter)}>
               <option value="ALL">전체 내역</option>
@@ -259,8 +248,8 @@ export function ServiceManagementPage() {
         <aside className="xl:sticky xl:top-[120px] xl:h-[calc(100vh-140px)] flex flex-col rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden" aria-label="서비스 분류">
           <div className="p-5 border-b border-zinc-100 bg-zinc-50/50">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-bold text-zinc-900">분류 체계 트리</h2>
-              <button type="button" className="rounded border border-zinc-200 bg-white px-2 py-1 text-[10px] font-bold text-zinc-600 shadow-sm hover:bg-zinc-50">+ 분류 추가</button>
+              <h2 className="text-[15px] font-bold text-zinc-900">분류 체계 트리</h2>
+              <button type="button" className="rounded border border-zinc-200 bg-white px-2 py-1 text-[12px] font-bold text-zinc-600 shadow-sm hover:bg-zinc-50">+ 분류 추가</button>
             </div>
             <div className="relative">
               <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -295,23 +284,23 @@ export function ServiceManagementPage() {
               </nav>
               {selectedCategory?.description && <p className="mt-4 text-[13px] leading-relaxed text-zinc-600 bg-zinc-50 p-3 rounded-lg border border-zinc-100">{selectedCategory.description}</p>}
               <div className="mt-5 flex flex-wrap gap-2">
-                <span className="rounded bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-700 uppercase">분류 내 서비스 {selectionStats.total}건</span>
-                <span className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 uppercase">운영 {selectionStats.active}</span>
-                <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-900 uppercase">작성중 {selectionStats.draft}</span>
+                <span className="rounded bg-zinc-100 px-2 py-1 text-[12px] font-bold text-zinc-700 uppercase">분류 내 서비스 {selectionStats.total}건</span>
+                <span className="rounded bg-emerald-50 px-2 py-1 text-[12px] font-bold text-emerald-800 uppercase">운영 {selectionStats.active}</span>
+                <span className="rounded bg-amber-50 px-2 py-1 text-[12px] font-bold text-amber-900 uppercase">작성중 {selectionStats.draft}</span>
               </div>
             </div>
 
             <section className="rounded-2xl border border-rose-200/70 bg-gradient-to-r from-rose-50/50 to-white p-6 shadow-sm flex flex-col h-full h-max-[200px]">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h2 className="text-[14px] font-bold text-zinc-900 flex items-center gap-2 mb-1">
+                  <h2 className="text-[15px] font-bold text-zinc-900 flex items-center gap-2 mb-1">
                     <span className="flex items-center justify-center w-5 h-5 bg-rose-100 rounded-full text-rose-600"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" /></svg></span>
                     중복위험 룰 엔진 현황
                   </h2>
-                  <p className="text-[11px] text-zinc-500 mb-3 ml-7 font-medium uppercase tracking-wider">이용 대상자 상충 요건 탐지</p>
+                  <p className="text-[12px] text-zinc-500 mb-3 ml-7 font-medium uppercase tracking-wider">이용 대상자 상충 요건 탐지</p>
                 </div>
                 {/* Moved "중복 규칙 관리" into the precise contextual header */}
-                <button type="button" className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50 shadow-sm transition-all focus:ring-2 focus:ring-rose-200 outline-none flex items-center gap-1">
+                <button type="button" className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[12px] font-bold text-rose-700 hover:bg-rose-50 shadow-sm transition-all focus:ring-2 focus:ring-rose-200 outline-none flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   규칙 엔진 관리
                 </button>
@@ -320,10 +309,10 @@ export function ServiceManagementPage() {
                 {DUPLICATE_RISK_ANALYSIS_MOCK.map((row) => (
                   <li key={row.id} className="rounded-xl border border-zinc-100 bg-white shadow-sm px-3 py-2.5 flex items-center gap-3">
                     <span className={[
-                      "shrink-0 rounded px-2 py-0.5 text-[10px] font-extrabold uppercase border",
+                      "shrink-0 rounded px-2 py-0.5 text-[12px] font-extrabold uppercase border",
                       row.level === "차단" ? "bg-rose-50 text-rose-700 border-rose-200" : row.level === "경고" ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-zinc-100 text-zinc-700 border-zinc-200"
                     ].join(" ")}>{row.level}</span>
-                    <p className="font-bold text-[12px] text-zinc-800 truncate">{row.category} <span className="font-medium text-[11px] text-zinc-500 ml-1">- {row.detail}</span></p>
+                    <p className="font-bold text-[12px] text-zinc-800 truncate">{row.category} <span className="font-medium text-[12px] text-zinc-500 ml-1">- {row.detail}</span></p>
                   </li>
                 ))}
               </ul>
@@ -334,21 +323,21 @@ export function ServiceManagementPage() {
           <div className="flex gap-4 border-b border-zinc-200 mt-2 px-1">
             <button
                onClick={() => setActiveTab("services")}
-               className={["relative px-2 py-3 text-[14px] font-extrabold transition-all", activeTab === "services" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
+               className={["relative px-2 py-3 text-[15px] font-extrabold transition-all", activeTab === "services" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
             >
                분류 내 서비스 인벤토리 ({filteredServices.length})
                {activeTab === "services" && <div className="absolute bottom-[-1.5px] left-0 right-0 h-[3px] bg-blue-600 rounded-t-lg" />}
             </button>
             <button
                onClick={() => setActiveTab("mappings")}
-               className={["relative px-2 py-3 text-[14px] font-extrabold transition-all", activeTab === "mappings" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
+               className={["relative px-2 py-3 text-[15px] font-extrabold transition-all", activeTab === "mappings" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
             >
                대상자 연계 매핑 현황 ({SUBJECT_SERVICE_MAPPING_MOCK.length})
                {activeTab === "mappings" && <div className="absolute bottom-[-1.5px] left-0 right-0 h-[3px] bg-blue-600 rounded-t-lg" />}
             </button>
             <button
                onClick={() => setActiveTab("audit")}
-               className={["relative px-2 py-3 text-[14px] font-extrabold transition-all", activeTab === "audit" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
+               className={["relative px-2 py-3 text-[15px] font-extrabold transition-all", activeTab === "audit" ? "text-blue-700" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
             >
                시스템 정책 및 감사 이력
                {activeTab === "audit" && <div className="absolute bottom-[-1.5px] left-0 right-0 h-[3px] bg-blue-600 rounded-t-lg" />}
@@ -376,12 +365,12 @@ export function ServiceManagementPage() {
                       </svg>
                       <input type="search" value={tableQuery} onChange={(e) => setTableQuery(e.target.value)} placeholder="검색어 입력..." className="w-full h-9 rounded-xl border border-zinc-200 bg-white pl-9 pr-3 text-[12px] font-medium text-zinc-800 shadow-sm focus:ring-2 outline-none" />
                     </div>
-          <div className="flex bg-zinc-200/50 p-1 rounded-xl shadow-inner border border-zinc-200/50 shrink-0">
+          <div className="flex bg-zinc-200/50 p-1 rounded-xl shadow-inner border border-zinc-200/50 shrink-0 w-max">
              {(
                [["ALL", "전체"], ["ACTIVE", "운영"], ["DRAFT", "작성중"], ["INACTIVE", "중지"]] as const
              ).map(([key, label]) => (
                <button key={key} type="button" onClick={() => setStatusFilter(key)} className={[
-                 "rounded-lg px-3 py-1 text-[11px] font-bold tracking-wide transition-all whitespace-nowrap",
+                 "rounded-lg px-4 py-1.5 text-[12px] font-extrabold tracking-wide transition-all whitespace-nowrap",
                  statusFilter === key ? "bg-white text-zinc-900 shadow-sm" : "bg-transparent text-zinc-500 hover:text-zinc-800",
                ].join(" ")}>{label}</button>
              ))}
@@ -391,7 +380,7 @@ export function ServiceManagementPage() {
                 
                 <div className="">
                   <table className="w-full text-left text-[13px]">
-                    <thead className="bg-zinc-50/30 text-[11px] font-extrabold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
+                    <thead className="bg-zinc-50/30 text-[12px] font-extrabold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
                       <tr>
                         <th className="px-5 py-3 whitespace-nowrap">
                           {/* Mock checkbox for the "종료 처리" visual context */}
@@ -416,27 +405,27 @@ export function ServiceManagementPage() {
                             <td className="px-5 py-4">
                               <input type="checkbox" className="rounded border-zinc-300" aria-label="Select row" />
                             </td>
-                            <td className="px-5 py-4 font-mono text-[11px] text-zinc-400">{row.code}</td>
-                            <td className="px-5 py-4 font-bold text-zinc-900">{row.name}</td>
+                            <td className="px-5 py-4 font-mono text-[12px] text-zinc-400">{row.code}</td>
+                            <td className="px-5 py-4 font-bold text-[15px] text-zinc-900">{row.name}</td>
                             <td className="px-5 py-4 text-[12px] text-zinc-600 leading-snug">
-                              <span className="font-semibold text-zinc-800">{row.tierMid}</span><br/><span className="text-[11px] text-zinc-400">{row.tierLarge} &gt; {row.tierSmall}</span>
+                              <span className="font-semibold text-zinc-800">{row.tierMid}</span><br/><span className="text-[12px] text-zinc-400">{row.tierLarge} &gt; {row.tierSmall}</span>
                             </td>
                             <td className="px-5 py-4 text-[12px] text-zinc-600">{row.targetGroup}</td>
                             <td className="px-5 py-4 text-[12px] text-zinc-600">{row.providerOrg}</td>
                             <td className="px-5 py-4 text-center">
                               {row.duplicateRisk ? (
-                                <span className="inline-flex rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-200 uppercase">중복경고</span>
+                                <span className="inline-flex rounded-md bg-rose-50 px-2 py-0.5 text-[12px] font-bold text-rose-700 ring-1 ring-rose-200 uppercase">중복경고</span>
                               ) : (
-                                <span className="inline-flex rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-500 uppercase">안전</span>
+                                <span className="inline-flex rounded-md bg-zinc-100 px-2 py-0.5 text-[12px] font-bold text-zinc-500 uppercase">안전</span>
                               )}
                             </td>
                             <td className="px-5 py-4 text-center">
                               <span className={[
-                                "inline-flex rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ring-1",
+                                "inline-flex rounded-md px-2 py-0.5 text-[12px] font-bold uppercase ring-1",
                                 row.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : row.status === "DRAFT" ? "bg-amber-50 text-amber-900 ring-amber-200" : "bg-zinc-100 text-zinc-600 ring-zinc-200"
                               ].join(" ")}>{row.status}</span>
                             </td>
-                            <td className="px-5 py-4 text-right tabnum font-extrabold text-[14px] text-zinc-800">{row.enrolledCount.toLocaleString()}</td>
+                            <td className="px-5 py-4 text-right tabnum font-extrabold text-[13px] text-zinc-800">{row.enrolledCount.toLocaleString()}</td>
                           </tr>
                         ))
                       )}
@@ -455,7 +444,7 @@ export function ServiceManagementPage() {
                 </div>
                 <div className="">
                   <table className="w-full text-left text-[12px]">
-                    <thead className="bg-white text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
+                    <thead className="bg-white text-[12px] font-extrabold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
                       <tr>
                         <th className="px-5 py-3">대상자</th>
                         <th className="px-5 py-3 min-w-[200px]">적용 서비스</th>
@@ -468,13 +457,13 @@ export function ServiceManagementPage() {
                     <tbody className="divide-y divide-zinc-50">
                       {SUBJECT_SERVICE_MAPPING_MOCK.map((m) => (
                         <tr key={m.id} className="hover:bg-zinc-50 transition-colors group">
-                          <td className="px-5 py-4 font-bold text-[13px] text-zinc-900">{m.subjectName}</td>
+                          <td className="px-5 py-4 font-bold text-[15px] text-zinc-900">{m.subjectName}</td>
                           <td className="px-5 py-4 font-semibold text-zinc-800">{m.serviceName}</td>
                           <td className="px-5 py-4 text-zinc-500">{m.tierPath}</td>
-                          <td className="px-5 py-4 font-mono text-[11px] text-center text-zinc-500">{m.start} <span className="text-zinc-300 mx-1">~</span> {m.end}</td>
+                          <td className="px-5 py-4 font-mono text-[12px] text-center text-zinc-500">{m.start} <span className="text-zinc-300 mx-1">~</span> {m.end}</td>
                           <td className="px-5 py-4 text-center font-bold text-zinc-700">{m.status}</td>
                           <td className="px-5 py-4 text-center">
-                            {m.dupWarning ? <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2.5 py-1 rounded shadow-sm border border-amber-200">경고</span> : <span className="text-zinc-300">—</span>}
+                            {m.dupWarning ? <span className="text-[12px] font-bold bg-amber-50 text-amber-700 px-2.5 py-1 rounded shadow-sm border border-amber-200">경고</span> : <span className="text-zinc-300">—</span>}
                           </td>
                         </tr>
                       ))}
@@ -492,8 +481,8 @@ export function ServiceManagementPage() {
                   {SERVICE_AUDIT_LOG_MOCK.map((entry) => (
                     <li key={entry.id} className="relative">
                       <span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500 shadow-sm" aria-hidden />
-                      <time className="font-mono text-[11px] text-zinc-400 block mb-1">{entry.at}</time>
-                      <p className="font-bold text-[14px] text-zinc-800 tracking-tight">{entry.actor} <span className="text-blue-600 ml-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50 text-[12px]">{entry.action}</span></p>
+                      <time className="font-mono text-[12px] text-zinc-400 block mb-1">{entry.at}</time>
+                      <p className="font-bold text-[13px] text-zinc-800 tracking-tight">{entry.actor} <span className="text-blue-600 ml-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50 text-[12px]">{entry.action}</span></p>
                       <p className="mt-2 text-[13px] text-zinc-600 bg-zinc-50 p-3 rounded-lg border border-zinc-100 max-w-xl">{entry.detail}</p>
                     </li>
                   ))}

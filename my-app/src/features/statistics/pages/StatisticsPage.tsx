@@ -1,5 +1,5 @@
 import { useState, useId } from "react";
-import { PageHeader } from "@/features/admin-shell";
+import { PageHeader, PageHeaderAction, PlusIcon, ManagementKpiRow } from "@/features/admin-shell";
 
 // ──── MOCK DATA ────
 type SyncStatus = "healthy" | "delayed" | "error" | "syncing";
@@ -99,13 +99,12 @@ export function StatisticsPage() {
       return;
     }
 
-    // Fake UI Update Action
     alert(`[${uploadedFile.name}] 파일 업로드 및 데이터 파이프라인 동기화가 시작되었습니다.`);
     if (selectedSource) {
       setSources((prev) =>
         prev.map((s) =>
           s.id === selectedSource.id
-            ? { ...s, status: "syncing", lastUpdated: "지금 막", rowSize: s.rowSize + 92 }
+            ? { ...s, status: "syncing", lastUpdated: "2026-04-02", rowSize: s.rowSize + 92 }
             : s
         )
       );
@@ -115,9 +114,9 @@ export function StatisticsPage() {
 
   const statusMap = {
     healthy: { label: "정상 연동", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    delayed: { label: "지연 (업데이트 필요)", color: "bg-amber-50 text-amber-700 border-amber-200" },
+    delayed: { label: "지연됨", color: "bg-amber-50 text-amber-700 border-amber-200" },
     error: { label: "동기화 오류", color: "bg-rose-50 text-rose-700 border-rose-200" },
-    syncing: { label: "처리중...", color: "bg-blue-50 text-blue-700 border-blue-200 animate-pulse" },
+    syncing: { label: "동기화 중", color: "bg-blue-50 text-blue-700 border-blue-200 animate-pulse" },
   };
 
   const healthyCount = sources.filter(s => s.status === "healthy" || s.status === "syncing").length;
@@ -125,76 +124,87 @@ export function StatisticsPage() {
   const errorCount = sources.filter(s => s.status === "error").length;
 
   return (
-    <div className="flex flex-col h-full space-y-5">
-      <PageHeader eyebrow="OVERVIEW · 통합 통계 관리" title="통합 통계 관리" />
+    <div className="flex flex-col h-full space-y-6">
+      <PageHeader 
+        eyebrow="OVERVIEW · 통합 통계 관리" 
+        title="통합 통계 관리" 
+        aside={
+          <PageHeaderAction onClick={() => {}}>
+            <PlusIcon />
+            신규 데이터셋 등록
+          </PageHeaderAction>
+        }
+      />
 
-      {/* KPI 3 Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col justify-center">
-          <p className="text-[12px] font-extrabold text-zinc-400 tracking-widest uppercase mb-1 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>정상 가동 데이터셋</p>
-          <div className="flex items-end gap-2"><span className="text-[32px] font-black text-zinc-900 leading-none tabnum">{healthyCount}</span><span className="text-[14px] font-bold text-zinc-500 pb-0.5">/ {sources.length} 종</span></div>
-        </div>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/30 p-5 shadow-sm flex flex-col justify-center">
-          <p className="text-[12px] font-extrabold text-amber-600 tracking-widest uppercase mb-1 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500"></span>업데이트 지연 (기한도과)</p>
-          <div className="flex items-end gap-2"><span className="text-[32px] font-black text-amber-700 leading-none tabnum">{delayedCount}</span><span className="text-[14px] font-bold text-amber-500 pb-0.5">건 제재 건</span></div>
-        </div>
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/30 p-5 shadow-sm flex flex-col justify-center">
-          <p className="text-[12px] font-extrabold text-rose-600 tracking-widest uppercase mb-1 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500"></span>동기화 / 결측치 오류</p>
-          <div className="flex items-end gap-2"><span className="text-[32px] font-black text-rose-700 leading-none tabnum">{errorCount}</span><span className="text-[14px] font-bold text-rose-500 pb-0.5">건 이상 탐지</span></div>
-        </div>
-      </div>
+      <section aria-label="데이터 파이프라인 상태 지표">
+        <ManagementKpiRow 
+          className="md:grid-cols-3"
+          items={[
+            { id: "stat-healthy", label: "정상 가동 데이터셋", value: `${healthyCount} / ${sources.length} 종`, color: "emerald", icon: "monitor", sentiment: "positive", sparkline: [1, 2, 2, 3, 2, 3, healthyCount], delta: "98.2% 가동률" },
+            { id: "stat-delayed", label: "업데이트 지연", value: `${delayedCount} 건`, color: "amber", icon: "alert", sentiment: "negative", sparkline: [0, 1, 0, 2, 1, 1, delayedCount], delta: "+1 (어제 대비)" },
+            { id: "stat-error", label: "동기화 이상 탐지", value: `${errorCount} 건`, color: "rose", icon: "alert", sentiment: "negative", sparkline: [2, 1, 3, 2, 1, 0, errorCount], delta: "−100% 오류율" },
+          ]} 
+        />
+      </section>
 
-      {/* Main Data Lists */}
-      <div className="flex-1 rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden flex flex-col">
+      {/* Main Table */}
+      <section className="flex-1 rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden flex flex-col">
          <div className="flex items-center justify-between p-5 border-b border-zinc-100 bg-zinc-50/50">
-           <div>
-             <h3 className="text-[16px] font-extrabold text-zinc-900">데이터셋(Data-set) 파이프라인 매핑</h3>
-           </div>
-           <div>
-             <button className="px-4 py-2 bg-white text-zinc-700 border border-zinc-300 rounded-xl text-[12px] font-bold shadow-sm hover:bg-zinc-50 whitespace-nowrap">+ 신규 데이터셋 등록</button>
-           </div>
+            <h3 className="text-[14px] font-extrabold text-zinc-900 flex items-center gap-2">
+              <span className="w-1.5 h-3.5 bg-blue-600 rounded-sm"></span>
+              데이터 파이프라인 인벤토리
+            </h3>
+            <div className="flex gap-2">
+               <button className="h-9 px-4 rounded-xl border border-zinc-200 bg-white text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all shadow-sm active:scale-95">CSV 대용량 다운로드</button>
+            </div>
          </div>
+         
          <div className="flex-1 overflow-x-auto min-h-0 bg-white">
-            <table className="w-full text-left text-[13px] min-w-[900px]">
-              <thead className="bg-zinc-50/80 text-[11px] font-extrabold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
+            <table className="w-full text-left text-[13px] min-w-[1000px] border-collapse">
+              <thead className="bg-zinc-50/80 text-[11px] font-extrabold text-zinc-500 uppercase tracking-widest border-b border-zinc-100 sticky top-0 z-10 backdrop-blur-sm">
                 <tr>
-                  <th className="px-5 py-4 w-[60px]">ID</th>
-                  <th className="px-5 py-4 min-w-[280px]">데이터셋 명칭 (주제 영역)</th>
-                  <th className="px-5 py-4">동기화 주기</th>
-                  <th className="px-5 py-4">적재 누적(ROW)</th>
-                  <th className="px-5 py-4 min-w-[120px]">마지막 업데이트</th>
-                  <th className="px-5 py-4 text-center">건강도(Status)</th>
-                  <th className="px-5 py-4 text-center">액션</th>
+                  <th className="px-5 py-4 w-[60px] text-center">ID</th>
+                  <th className="px-5 py-4 min-w-[320px]">데이터셋 명칭 및 주제 영역</th>
+                  <th className="px-5 py-4 w-[120px]">동기화 주기</th>
+                  <th className="px-5 py-4 w-[150px]">적재 누적 (Total Rows)</th>
+                  <th className="px-5 py-4 w-[180px]">마지막 업데이트</th>
+                  <th className="px-5 py-4 text-center w-[120px]">연동 상태</th>
+                  <th className="px-5 py-4 text-center w-[150px]">관리 액션</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {sources.map(s => (
-                  <tr key={s.id} className="hover:bg-zinc-50 transition-colors group">
-                    <td className="px-5 py-4 text-[11px] font-mono text-zinc-400 font-bold">{s.id.toUpperCase()}</td>
-                    <td className="px-5 py-4">
-                      <p className="font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{s.name}</p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5 font-medium">관리 주체: {s.uploader}</p>
+                  <tr key={s.id} className="hover:bg-zinc-50 group transition-all">
+                    <td className="px-5 py-5 text-[11px] font-mono text-zinc-400 font-bold text-center">{s.id.toUpperCase()}</td>
+                    <td className="px-5 py-5">
+                      <p className="text-[15px] font-bold text-zinc-900 group-hover:text-blue-600 transition-colors cursor-pointer">{s.name}</p>
+                      <p className="text-[11px] text-zinc-400 mt-1 font-bold">Principal: {s.uploader}</p>
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded font-extrabold text-[11px]">{s.cycle}</span>
+                    <td className="px-5 py-5">
+                      <span className="bg-zinc-100 text-zinc-600 px-2.5 py-1 rounded-lg font-extrabold text-[11px] border border-zinc-200 shadow-sm">{s.cycle}</span>
                     </td>
-                    <td className="px-5 py-4 font-mono font-bold text-zinc-700">
+                    <td className="px-5 py-5 font-mono font-extrabold text-zinc-600 tabular-nums">
                       {s.rowSize.toLocaleString()}
                     </td>
-                    <td className="px-5 py-4 text-[11px] text-zinc-500 font-mono">
-                      {s.lastUpdated}<br/><span className={["opacity-70", s.status === 'delayed' ? "text-amber-600 font-bold" : ""].join(" ")}>(차기: {s.nextDueDate})</span>
+                    <td className="px-5 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-mono font-bold text-zinc-700">{s.lastUpdated}</span>
+                        <span className={["text-[10px] font-bold mt-0.5", s.status === 'delayed' ? "text-rose-500" : "text-zinc-400"].join(" ")}>
+                           Next Due: {s.nextDueDate}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={["px-2.5 py-1 rounded-md text-[11px] font-extrabold uppercase border shadow-sm whitespace-nowrap", statusMap[s.status].color].join(" ")}>
+                    <td className="px-5 py-5 text-center">
+                      <span className={["px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase border shadow-sm", statusMap[s.status].color].join(" ")}>
                         {statusMap[s.status].label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-center whitespace-nowrap">
+                    <td className="px-5 py-5 text-center">
                       <button 
                         onClick={() => openUploadModal(s)}
-                        className="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-600 text-[11px] font-bold shadow-sm hover:border-blue-300 hover:text-blue-600 transition-all outline-none focus:ring-2 focus:ring-blue-100"
+                        className="h-9 px-3 bg-white border border-zinc-200 rounded-xl text-zinc-600 text-[11px] font-extrabold shadow-sm hover:border-blue-300 hover:text-blue-600 transition-all outline-none active:scale-95"
                       >
-                         수동 업로드 (CSV)
+                         데이터 수동 갱신
                       </button>
                     </td>
                   </tr>
@@ -202,52 +212,58 @@ export function StatisticsPage() {
               </tbody>
             </table>
          </div>
-      </div>
+      </section>
 
-      {/* Fake Modal UI */}
+      {/* Upload Modal */}
       {isModalOpen && selectedSource && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)} />
-          <div role="dialog" aria-labelledby={`${modalId}-title`} className="relative z-10 w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-zinc-100 p-5 bg-zinc-50/50">
-              <h2 id={`${modalId}-title`} className="text-[15px] font-extrabold text-zinc-900 flex items-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                원천 데이터셋 로컬 업로드
+          <div role="dialog" aria-labelledby={`${modalId}-title`} className="relative z-10 w-full max-w-lg rounded-3xl border border-zinc-200 bg-white shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-100 p-6 bg-zinc-50/50">
+              <h2 id={`${modalId}-title`} className="text-[17px] font-extrabold text-zinc-900 tracking-tight">
+                원천 데이터셋 로컬 동기화
               </h2>
-              <button type="button" className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-200 transition" onClick={() => setIsModalOpen(false)}>
+              <button type="button" className="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 transition" onClick={() => setIsModalOpen(false)}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
-            <form onSubmit={handleUploadSubmit} className="p-6">
-              <div className="mb-4 bg-zinc-50 p-3 rounded-lg border border-zinc-200">
-                 <p className="text-[12px] font-bold text-zinc-500 uppercase tracking-widest mb-1">대상 타겟 테이블</p>
-                 <p className="text-[14px] font-black text-zinc-900">{selectedSource.name}</p>
-                 <p className="text-[11px] text-zinc-400 mt-1">업로드 포맷 한정: 순수 CSV 또는 XLSX 헤더포함 양식</p>
+            <form onSubmit={handleUploadSubmit} className="p-8">
+              <div className="mb-6 bg-zinc-50/50 p-5 rounded-2xl border border-zinc-100 shadow-inner">
+                 <p className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1">Target Pipeline</p>
+                 <p className="text-[15px] font-extrabold text-zinc-900">{selectedSource.name}</p>
+                 <p className="text-[11px] text-zinc-400 mt-2 font-bold flex items-center gap-1.5">
+                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                   지원 포맷: CSV (UTF-8 Header Only)
+                 </p>
               </div>
 
-              {/* 드래그 존 (Dropzone Fake UI) */}
               <div 
-                className={["mt-4 border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer", isDragging ? "border-blue-400 bg-blue-50/50" : uploadedFile ? "border-emerald-300 bg-emerald-50/30" : "border-zinc-300 bg-zinc-50/50 hover:bg-zinc-100"].join(" ")}
+                className={["border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center transition-all cursor-pointer group", 
+                  isDragging ? "border-blue-400 bg-blue-50/30 scale-[1.02]" : 
+                  uploadedFile ? "border-emerald-400 bg-emerald-50/30" : 
+                  "border-zinc-200 bg-zinc-50/30 hover:border-blue-300 hover:bg-white"
+                ].join(" ")}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                onClick={() => {
-                   // 브라우저 기본 파일선택기 페이크 (클릭 무시)
-                }}
               >
                  {uploadedFile ? (
                    <>
-                     <svg className="w-10 h-10 text-emerald-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                     <p className="text-[13px] font-bold text-emerald-700">{uploadedFile.name}</p>
-                     <p className="text-[11px] text-emerald-600/70 mt-1">{(uploadedFile.size / 1024).toFixed(1)} KB (준비완료)</p>
+                     <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-3 text-emerald-600 border border-emerald-200">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     </div>
+                     <p className="text-[14px] font-extrabold text-zinc-900">{uploadedFile.name}</p>
+                     <p className="text-[11px] text-emerald-600 font-bold mt-1">{(uploadedFile.size / 1024).toFixed(1)} KB 준비완료</p>
                    </>
                  ) : (
                    <>
-                     <svg className="w-10 h-10 text-zinc-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                     <p className="text-[13px] font-bold text-zinc-700">이곳에 파일을 드래그 & 드롭 하세요</p>
-                     <p className="text-[11px] text-zinc-400 mt-1">또는 박스를 클릭하여 수동 탐색기 열기</p>
-                     <label className="mt-4 px-4 py-2 border border-zinc-200 bg-white rounded-lg text-[11px] font-bold text-zinc-600 cursor-pointer shadow-sm hover:border-zinc-300 relative">
+                     <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4 text-zinc-300 group-hover:text-blue-400 transition-colors border border-zinc-200">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                     </div>
+                     <p className="text-[13px] font-extrabold text-zinc-700 group-hover:text-zinc-900 transition-colors">데이터 파일을 드래그하여 업로드</p>
+                     <p className="text-[11px] text-zinc-400 mt-2 font-bold">또는 수동으로 탐색기 열기</p>
+                     <label className="mt-6 px-6 h-10 border border-zinc-200 bg-white rounded-xl text-[12px] font-extrabold text-zinc-600 cursor-pointer shadow-sm hover:bg-zinc-50 flex items-center justify-center relative transition-colors active:scale-95">
                        파일 찾아보기
                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => {
                           if (e.target.files && e.target.files.length > 0) setUploadedFile(e.target.files[0]);
@@ -257,29 +273,30 @@ export function StatisticsPage() {
                  )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-5">
-                <div>
-                   <label className="block text-[11px] font-bold text-zinc-500 mb-1.5 uppercase">반영 회차 (연도)</label>
-                   <select className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-bold text-zinc-800 outline-none">
-                     <option>2026</option>
-                     <option>2025</option>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="space-y-1.5">
+                   <label className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest ml-1">Target Period</label>
+                   <select className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-4 text-[13px] font-bold text-zinc-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all">
+                     <option>2026년 전체</option>
+                     <option>2026년 1분기</option>
+                     <option>2026년 2분기</option>
                    </select>
                 </div>
-                <div>
-                   <label className="block text-[11px] font-bold text-zinc-500 mb-1.5 uppercase">세부 범위</label>
-                   <select className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-bold text-zinc-800 outline-none">
-                     <option>1분기</option>
-                     <option>2분기</option>
-                     <option>3분기</option>
-                     <option>4분기</option>
+                <div className="space-y-1.5">
+                   <label className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest ml-1">Ingestion Mode</label>
+                   <select className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-4 text-[13px] font-bold text-zinc-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all">
+                     <option>증분 업데이트 (Upsert)</option>
+                     <option>전체 덮어쓰기 (Replace)</option>
                    </select>
                 </div>
               </div>
               
-              <div className="mt-8 flex gap-3 justify-end items-center border-t border-zinc-100 pt-5">
-                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-bold text-[13px] hover:bg-zinc-50 transition-colors">취소</button>
-                 <button type="submit" className={["px-5 py-2.5 rounded-xl font-bold text-[13px] shadow-sm transition-colors", uploadedFile ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-zinc-100 text-zinc-400 cursor-not-allowed"].join(" ")}>
-                   클라우드 파이프라인 전송
+              <div className="mt-10 flex gap-2 justify-end items-center border-t border-zinc-100 pt-6">
+                 <button type="button" onClick={() => setIsModalOpen(false)} className="h-11 px-6 rounded-xl border border-zinc-200 text-zinc-600 font-bold text-[13px] hover:bg-zinc-50 active:scale-95 transition-all">취소</button>
+                 <button type="submit" className={["h-11 px-8 rounded-xl font-extrabold text-[13px] shadow-lg transition-all active:scale-95", 
+                   uploadedFile ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20" : "bg-zinc-100 text-zinc-400 cursor-not-allowed shadow-none border border-zinc-200"
+                 ].join(" ")}>
+                   클라우드 파이프라인 전송 시작
                  </button>
               </div>
             </form>

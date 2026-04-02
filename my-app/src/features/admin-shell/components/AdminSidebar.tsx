@@ -186,7 +186,7 @@ export function AdminSidebar() {
         )}
       </div>
 
-      <nav className="relative flex flex-1 flex-col gap-1 px-3 pb-4 pt-5" ref={collapsedMenuRef}>
+      <nav className="relative flex flex-1 flex-col gap-1 overflow-y-auto min-h-0 px-3 pb-4 pt-5" ref={collapsedMenuRef}>
         {collapsed
           ? collapsedTopLevelItems.map((item) => (
               <div key={item.to} className="relative mb-1">

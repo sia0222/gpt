@@ -1,5 +1,5 @@
-import { useState, useId } from "react";
-import { PageHeader } from "@/features/admin-shell";
+import { useState } from "react";
+import { PageHeader, ManagementKpiRow } from "@/features/admin-shell";
 
 // ──── MOCK DATA ────
 type Status = "new" | "resolved";
@@ -67,9 +67,8 @@ export function CrisisHouseholdsPage() {
   function handleSelect(id: string) {
     if (selectedId !== id) {
       setSelectedId(id);
-      setReplyText(""); // 리셋
+      setReplyText("");
     }
-    // 마크 읽음 처리
     setReports(prev => prev.map(r => r.id === id ? { ...r, read: true } : r));
   }
 
@@ -89,176 +88,212 @@ export function CrisisHouseholdsPage() {
 
   const STATUS_LABELS: Record<Status, string> = {
     new: "신규 접수",
-    resolved: "답변/종결",
+    resolved: "조치 완료",
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-      <PageHeader eyebrow="OVERVIEW · 대민 제보 관제 센터" title="대민 제보 관제 센터" />
+    <div className="flex flex-col h-full space-y-6">
+      <PageHeader 
+        eyebrow="OVERVIEW · 위기가구 제보 관제" 
+        title="위기가구 제보 및 조치" 
+      />
+
+      <section aria-label="위기가구 제보 상태 지표">
+        <ManagementKpiRow items={[
+          { id: "crisis-total", label: "전체 제보 접수", value: reports.length.toString(), color: "zinc", icon: "bell", sparkline: [12, 15, 10, 18, 14, 20, reports.length], delta: "+2 (주간)" },
+          { id: "crisis-pending", label: "조치 대기 중", value: reports.filter(r => r.status === "new").length.toString(), color: "rose", icon: "alert", sentiment: "negative", sparkline: [1, 3, 2, 4, 3, 5, 2], delta: "-1 (금일)" },
+          { id: "crisis-resolved", label: "지난 24h 조치완료", value: "82%", color: "emerald", icon: "monitor", sentiment: "positive", sparkline: [60, 75, 80, 78, 85, 90, 82], delta: "+4.2%p" },
+          { id: "crisis-score", label: "지역 위기 대응 지수", value: "94.5", color: "blue", icon: "people", sentiment: "positive", sparkline: [88, 90, 92, 91, 93, 95, 94], delta: "+0.5" }
+        ]} />
+      </section>
       
-      {/* 헬프데스크 (Inbox) 컨테이너 */}
-      <div className="flex-1 flex rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden min-h-[600px]">
+      <div className="flex-1 flex rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden min-h-[650px]">
         
-        {/* === 좌측: 목록 (Inbox List) === */}
-        <section className="w-[35%] flex flex-col border-r border-zinc-200/70 bg-zinc-50/50 shrink-0">
-          <div className="p-4 border-b border-zinc-200 bg-white">
-            <div className="flex bg-zinc-100/80 p-1 rounded-xl shadow-inner w-full mb-2">
+        {/* === 좌측: 인박스 슬라이드 === */}
+        <section className="w-[380px] flex flex-col border-r border-zinc-100 bg-zinc-50/30 shrink-0">
+          <div className="p-5 border-b border-zinc-100 bg-white">
+            <div className="flex bg-zinc-200/50 p-1 rounded-xl shadow-inner border border-zinc-200/50 w-full mb-4 shrink-0">
                <button 
                  onClick={() => setFilter("all")} 
-                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold transition-all", filter === "all" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
+                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold tracking-wide transition-all whitespace-nowrap", filter === "all" ? "bg-white text-zinc-900 shadow-sm" : "bg-transparent text-zinc-500 hover:text-zinc-800"].join(" ")}
                >전체</button>
                <button 
                  onClick={() => setFilter("new")} 
-                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold transition-all", filter === "new" ? "bg-rose-50 text-rose-600 shadow-sm border border-rose-100" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
-               >접수 대기</button>
+                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold tracking-wide transition-all whitespace-nowrap", filter === "new" ? "bg-white text-rose-600 shadow-sm" : "bg-transparent text-zinc-500 hover:text-zinc-800"].join(" ")}
+               >대기중</button>
                <button 
                  onClick={() => setFilter("resolved")} 
-                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold transition-all", filter === "resolved" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800"].join(" ")}
-               >답변 종결</button>
+                 className={["flex-1 py-1.5 rounded-lg text-[12px] font-extrabold tracking-wide transition-all whitespace-nowrap", filter === "resolved" ? "bg-white text-emerald-600 shadow-sm" : "bg-transparent text-zinc-500 hover:text-zinc-800"].join(" ")}
+               >조치완료</button>
             </div>
-            <p className="text-[11px] font-bold text-zinc-400 pl-1 mt-3 tracking-wide">
-               총 {filteredReports.length} 건 탐색됨
-            </p>
+            <div className="flex items-center justify-between px-1">
+               <p className="text-[12px] font-extrabold text-zinc-400 uppercase tracking-widest">Inbound Reports</p>
+               <span className="text-[12px] font-bold text-zinc-500">{filteredReports.length}건</span>
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
             {filteredReports.length === 0 ? (
-               <div className="p-10 text-center text-[13px] text-zinc-400 font-medium">조회된 접수 내역이 없습니다.</div>
+               <div className="p-12 text-center text-[13px] text-zinc-400 font-extrabold italic">내역이 없습니다.</div>
             ) : (
-              <ul className="divide-y divide-zinc-200/70">
-                {filteredReports.map(r => (
-                  <li key={r.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(r.id)}
-                      className={[
-                        "w-full text-left p-4 hover:bg-zinc-100 transition-colors focus:outline-none focus:bg-zinc-100",
-                        selectedId === r.id ? "bg-white border-l-4 border-l-blue-500 shadow-sm ring-1 ring-zinc-200" : "border-l-4 border-l-transparent"
-                      ].join(" ")}
-                    >
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className={["px-2 py-0.5 rounded text-[10px] font-extrabold tracking-widest", r.status === "new" ? "bg-rose-100 text-rose-700" : "bg-zinc-200 text-zinc-600"].join(" ")}>
-                          {STATUS_LABELS[r.status]}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-400">{r.createdAt.split(" ")[0]}</span>
-                      </div>
-                      
-                      {/* 상세 제보 내용 Snippet */}
-                      <h4 className={["text-[13px] leading-snug line-clamp-2 mt-2", r.read && r.status !== 'new' ? "font-bold text-zinc-600" : "font-extrabold text-zinc-900"].join(" ")}>
-                         "{r.description}"
-                      </h4>
-                      
-                      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold">
-                         <span className="text-zinc-500 font-mono tracking-tighter shrink-0">{r.id}</span>
-                         {r.status === "new" && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              filteredReports.map(r => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => handleSelect(r.id)}
+                  className={[
+                    "w-full text-left p-5 transition-all focus:outline-none relative group",
+                    selectedId === r.id ? "bg-white shadow-[inset_0_0_20px_rgba(37,99,235,0.03)]" : "hover:bg-white/50"
+                  ].join(" ")}
+                >
+                  {selectedId === r.id && <div className="absolute inset-y-0 left-0 w-1 bg-blue-600"></div>}
+                  
+                  <div className="flex justify-between items-center mb-3">
+                    <span className={["px-2 py-0.5 rounded text-[12px] font-extrabold tracking-tight border", 
+                      r.status === "new" ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                    ].join(" ")}>
+                      {STATUS_LABELS[r.status]}
+                    </span>
+                    <span className="text-[12px] font-mono font-bold text-zinc-300">{r.createdAt.split(" ")[0]}</span>
+                  </div>
+                  
+                  <h4 className={["text-[13px] leading-relaxed line-clamp-2", 
+                    !r.read && r.status === 'new' ? "font-extrabold text-zinc-900" : "font-bold text-zinc-500"
+                  ].join(" ")}>
+                     {r.description}
+                  </h4>
+                  
+                  <div className="mt-4 flex items-center justify-between">
+                     <span className="text-[12px] font-mono font-bold text-zinc-300 tracking-tight">{r.id}</span>
+                     {!r.read && <div className="w-2 h-2 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)] animate-pulse"></div>}
+                  </div>
+                </button>
+              ))
             )}
           </div>
         </section>
 
-        {/* === 우측: 티켓 처리 패널 (Inbox Detail & Action) === */}
-        <section className="flex-1 bg-zinc-50/30 flex flex-col relative min-w-0">
+        {/* === 우측: 티켓 뷰어 및 처리 패널 === */}
+        <section className="flex-1 bg-white flex flex-col relative min-w-0">
           {selectedReport ? (
             <>
               {/* 상단 툴바 */}
-              <div className="flex items-center justify-between px-8 py-5 border-b border-zinc-200 bg-white shrink-0 shadow-sm z-10">
+              <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-100 shrink-0">
                 <div>
-                  <h2 className="text-[18px] font-black text-zinc-900 tracking-tight">
-                    위기가구 접수건 상세
-                  </h2>
-                  <p className="text-[12px] font-mono font-bold text-zinc-400 mt-1 flex items-center gap-2">
-                    {selectedReport.id} <span className="text-zinc-300">|</span> {selectedReport.createdAt}
-                  </p>
+                   <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[12px] font-extrabold text-blue-600 uppercase tracking-widest">Case Management</span>
+                      <span className="text-zinc-200">/</span>
+                      <span className="text-[12px] font-mono font-bold text-zinc-400">{selectedReport.id}</span>
+                   </div>
+                   <h2 className="text-[22px] font-black text-zinc-900 tracking-tight leading-tight">
+                     제보 상세 및 조치 이력
+                   </h2>
                 </div>
-                <div>
-                   <span className={["px-4 py-1.5 rounded-full text-[12px] font-extrabold shadow-sm border", selectedReport.status === "new" ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-zinc-100 text-zinc-500 border-zinc-200"].join(" ")}>
+                <div className="flex items-center gap-3">
+                   <div className="text-right mr-2">
+                      <p className="text-[12px] font-bold text-zinc-400 uppercase">Received Date</p>
+                      <p className="text-[13px] font-mono font-bold text-zinc-900">{selectedReport.createdAt}</p>
+                   </div>
+                   <span className={["px-4 py-2 rounded-xl text-[12px] font-extrabold shadow-sm border", 
+                     selectedReport.status === "new" ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-emerald-50 text-emerald-600 border-emerald-200"
+                   ].join(" ")}>
                       {STATUS_LABELS[selectedReport.status]}
                    </span>
                 </div>
               </div>
               
-              {/* 메인 내용 스크롤 */}
-              <div className="flex-1 overflow-y-auto p-8 relative">
-                <div className="max-w-3xl mx-auto space-y-6">
+              {/* 메인 뷰포트 */}
+              <div className="flex-1 overflow-y-auto p-10 bg-zinc-50/30">
+                <div className="max-w-4xl mx-auto space-y-8">
                    
-                   {/* 1. 제보 원문 (Read-Only) */}
-                   <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
-                      <div className="bg-rose-50 border-b border-rose-100 p-4 flex items-center justify-between">
-                         <h3 className="text-[14px] font-extrabold text-rose-900 flex items-center gap-2">
-                           <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                           대민 사이트 제보 메세지 원문
-                         </h3>
-                      </div>
-                      <div className="p-6">
-                        <p className="text-[16px] leading-loose text-zinc-800 whitespace-pre-wrap font-medium">
-                          {selectedReport.description}
-                        </p>
-                      </div>
-                      <div className="bg-zinc-50 border-t border-zinc-100 p-4 flex items-center justify-between">
-                         <span className="text-[12px] font-extrabold text-zinc-500 uppercase tracking-widest">신고자 연락처</span>
-                         <span className="text-[15px] font-black font-mono text-zinc-900">{selectedReport.reporterPhone}</span>
-                      </div>
-                   </div>
-
-                   {/* 화살표 아이콘 플로우 */}
-                   <div className="flex justify-center -my-3 relative z-10">
-                      <div className="bg-white border text-zinc-400 border-zinc-200 rounded-full p-1.5 shadow-sm">
-                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                      </div>
-                   </div>
-
-                   {/* 2. 관리자 Action & Reply Area */}
-                   {selectedReport.status === "new" ? (
-                      <div className="bg-blue-50/30 rounded-2xl border-2 border-blue-200 p-1 shadow-sm relative">
-                         <form onSubmit={handleReplySubmit} className="bg-white rounded-[14px] p-6">
-                           <h3 className="text-[15px] font-black text-blue-900 flex items-center gap-2 mb-2">
-                             답변 발송 및 종결 처리
+                   {/* 1. 제보 섹션 */}
+                   <div className="relative">
+                      <div className="absolute -left-4 top-0 bottom-0 w-1 bg-rose-200 rounded-full"></div>
+                      <div className="bg-white rounded-3xl border border-zinc-200/60 shadow-xl shadow-zinc-200/20 overflow-hidden">
+                        <div className="bg-rose-50/50 border-b border-rose-50 p-6 flex items-center justify-between">
+                           <h3 className="text-[12px] font-extrabold text-rose-600 flex items-center gap-2 uppercase tracking-wide">
+                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                             Citizen Report Message
                            </h3>
-                           <p className="text-[12px] font-medium text-blue-700/80 leading-relaxed mb-5">
-                             아래에 작성하신 내용은 신고자(`{selectedReport.reporterPhone}`) 번호로 알림톡 전송 처리되며 해당 제보건은 지체없이 종결(Resolved) 전환됩니다. 관리상 부서 협의 등은 작성란에 간략히 남겨주세요.
-                           </p>
-
-                           <textarea
-                             required
-                             rows={5}
-                             placeholder="ex) 현장 점검반 파견 후 긴급 지원을 실시했습니다. 제보 감사드립니다."
-                             className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-[14px] font-medium text-zinc-900 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all resize-none shadow-inner"
-                             value={replyText}
-                             onChange={e => setReplyText(e.target.value)}
-                           ></textarea>
-
-                           <div className="mt-5 flex justify-end">
-                             <button type="submit" className="px-6 py-3 rounded-xl bg-blue-600 text-white font-black text-[14px] shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 tracking-wide">
-                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                               관리자 답변 발송 및 종결
-                             </button>
+                           <div className="flex items-center gap-2">
+                              <span className="text-[12px] font-bold text-zinc-400 mr-2">Reporter Check:</span>
+                              <span className="text-[15px] font-mono font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-lg border border-zinc-200">{selectedReport.reporterPhone}</span>
                            </div>
-                         </form>
+                        </div>
+                        <div className="p-8">
+                          <p className="text-[17px] leading-[1.8] text-zinc-800 font-medium tracking-tight">
+                            "{selectedReport.description}"
+                          </p>
+                        </div>
                       </div>
-                   ) : (
-                      <div className="bg-zinc-100 rounded-2xl border border-zinc-200 p-6 opacity-90 shadow-inner">
-                         <h3 className="text-[14px] font-extrabold text-zinc-500 flex items-center gap-2 mb-4 uppercase tracking-wider">
-                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                           종결된 조치 내용
-                         </h3>
-                         <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                           <p className="text-[15px] font-semibold leading-relaxed text-zinc-900 whitespace-pre-wrap">
-                             {selectedReport.adminReply}
-                           </p>
-                         </div>
+                   </div>
+
+                   {/* 커넥터 애니메이션 */}
+                   <div className="flex justify-center -my-4 relative z-10">
+                      <div className="bg-white border-2 border-zinc-100 text-zinc-300 rounded-full p-2 shadow-lg">
+                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
                       </div>
-                   )}
+                   </div>
+
+                   {/* 2. 관리자 조치 섹션 */}
+                   <div className="relative">
+                      {selectedReport.status === "new" ? (
+                         <>
+                           <div className="absolute -left-4 top-0 bottom-0 w-1 bg-blue-200 rounded-full"></div>
+                           <div className="bg-white rounded-3xl border-2 border-blue-100 shadow-2xl shadow-blue-600/5 transition-all overflow-hidden p-1">
+                              <form onSubmit={handleReplySubmit} className="p-7">
+                                <div className="flex items-center gap-2 mb-2">
+                                   <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
+                                   <label className="text-[15px] font-black text-blue-900">현장 출동 및 긴급 조치 결과 작성</label>
+                                </div>
+                                <p className="text-[12px] font-bold text-blue-600/60 leading-relaxed mb-6 pl-3">
+                                  작성하신 결과는 저장 즉시 제보자에게 SMS 통보되며, 시스템상 '조치 완료' 단계로 자동 전환됩니다.
+                                </p>
+
+                                <textarea
+                                  required
+                                  rows={6}
+                                  placeholder="ex) 담당 사회복지사가 방문하여 1차 상담을 완료했습니다. 현재 구청 긴급복지 지원 프로세스 가동 중입니다."
+                                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-[13px] font-bold text-zinc-900 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all resize-none shadow-inner leading-relaxed"
+                                  value={replyText}
+                                  onChange={e => setReplyText(e.target.value)}
+                                ></textarea>
+
+                                <div className="mt-6 flex justify-end">
+                                  <button type="submit" className="h-12 px-8 rounded-2xl bg-blue-600 text-white font-black text-[13px] shadow-xl shadow-blue-600/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-3 tracking-wide">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                                    조치 결과 발송 및 종결
+                                  </button>
+                                </div>
+                              </form>
+                           </div>
+                         </>
+                      ) : (
+                         <>
+                           <div className="absolute -left-4 top-0 bottom-0 w-1 bg-emerald-200 rounded-full"></div>
+                           <div className="bg-white rounded-3xl border border-zinc-200 shadow-xl overflow-hidden">
+                              <div className="p-6 border-b border-zinc-50 bg-emerald-50/30 flex items-center gap-2">
+                                 <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                 <h3 className="text-[13px] font-extrabold text-emerald-700 uppercase tracking-widest">Resolution Log</h3>
+                              </div>
+                              <div className="p-8">
+                                <p className="text-[15px] font-bold leading-relaxed text-zinc-900 bg-zinc-50 p-6 rounded-2xl border border-zinc-100 shadow-inner">
+                                  {selectedReport.adminReply}
+                                </p>
+                              </div>
+                           </div>
+                         </>
+                      )}
+                   </div>
                 </div>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 p-8">
-               <svg className="w-16 h-16 text-zinc-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-               <p className="text-[14px] font-bold">목록에서 제보를 선택하시면 원문을 읽고 관리 조치를 취할 수 있습니다.</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-300 p-12 bg-white">
+               <div className="w-20 h-20 rounded-full border-4 border-zinc-50 flex items-center justify-center mb-6">
+                  <svg className="w-10 h-10 text-zinc-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+               </div>
+               <p className="text-[13px] font-extrabold text-zinc-400">조치를 시작할 제보건을 왼쪽 목록에서 선택해주세요.</p>
             </div>
           )}
         </section>

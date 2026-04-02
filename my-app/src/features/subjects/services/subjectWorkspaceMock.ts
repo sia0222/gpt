@@ -1,5 +1,6 @@
 /** 목록 전용 위험 등급 (숫자 클수록 긴급 — 정렬에 사용) — 와이어: 정상·관심·주의·위험·긴급 */
-export type SubjectRiskLevel = "normal" | "concern" | "watch" | "high" | "critical";
+/** 위험 등급 — 4단계 고정: 긴급·주의·관심·정상 */
+export type SubjectRiskLevel = "normal" | "concern" | "watch" | "critical";
 
 export interface SubjectListItem {
   readonly id: string;
@@ -8,6 +9,14 @@ export interface SubjectListItem {
   readonly status: string;
   /** 표시용 연령 */
   readonly age: number;
+  /** 생년월일 (목록 표시용) */
+  readonly birthDate: string;
+  /** 주소 */
+  readonly address: string;
+  /** 집번호 */
+  readonly homePhone: string;
+  /** 핸드폰번호 */
+  readonly phone: string;
   /** 현재 위험 평가 */
   readonly riskLevel: SubjectRiskLevel;
   /** 위험 요약 한 줄 */
@@ -25,10 +34,9 @@ export interface SubjectListItem {
 
 export const SUBJECT_RISK_ORDER: Record<SubjectRiskLevel, number> = {
   critical: 0,
-  high: 1,
-  watch: 2,
-  concern: 3,
-  normal: 4,
+  watch: 1,
+  concern: 2,
+  normal: 3,
 };
 
 export type AlertTimelineLevel = "info" | "warn" | "critical";
@@ -110,6 +118,10 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "○○동",
     status: "이용중",
     age: 78,
+    birthDate: "1948-05-12",
+    address: "○○구 ○○동 101-2",
+    homePhone: "02-123-4567",
+    phone: "010-1234-5678",
     riskLevel: "concern",
     riskSummary: "실내 CO2 임계 근접",
     activeAlerts: ["CO2 985ppm (권고 900ppm)", "CO2 센서 배터리 41%"],
@@ -125,7 +137,11 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "△△동",
     status: "주의",
     age: 82,
-    riskLevel: "high",
+    birthDate: "1944-11-20",
+    address: "△△구 △△동 32-11",
+    homePhone: "—",
+    phone: "010-2345-6789",
+    riskLevel: "critical",
     riskSummary: "심박 이상 · 당일 재확인 필요",
     activeAlerts: ["심박 108 bpm (상한 초과)", "심박 밴드 배터리 29%"],
     lastSignalAt: "11:24",
@@ -140,6 +156,10 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "○○동",
     status: "이용중",
     age: 71,
+    birthDate: "1955-03-15",
+    address: "○○구 ○○동 78-3",
+    homePhone: "02-998-1234",
+    phone: "010-3322-1100",
     riskLevel: "normal",
     riskSummary: "특이사항 없음",
     activeAlerts: [],
@@ -155,6 +175,10 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "□□동",
     status: "일시중지",
     age: 69,
+    birthDate: "1957-01-15",
+    address: "□□구 □□동 2단지 1204호",
+    homePhone: "—",
+    phone: "010-5544-8899",
     riskLevel: "watch",
     riskSummary: "서비스 중단 · 단말 미수신 경과",
     activeAlerts: ["LTE 단말 2시간 미수신", "일시중지 기간 만료 임박(D-3)"],
@@ -170,6 +194,10 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "△△동",
     status: "이용중",
     age: 76,
+    birthDate: "1950-02-20",
+    address: "△△구 △△동 55-1",
+    homePhone: "—",
+    phone: "010-6677-4455",
     riskLevel: "normal",
     riskSummary: "안정",
     activeAlerts: [],
@@ -185,6 +213,10 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     district: "□□동",
     status: "이용중",
     age: 85,
+    birthDate: "1941-08-01",
+    address: "□□구 □□동 5단지 302호",
+    homePhone: "—",
+    phone: "010-9988-7766",
     riskLevel: "critical",
     riskSummary: "야간 미활동 + 응급콜 미응답",
     activeAlerts: ["거실 미활동 62분", "보호자·119 동시 연락 대기"],
@@ -195,6 +227,7 @@ export const SUBJECT_LIST_MOCK: readonly SubjectListItem[] = [
     caseManager: "응급반장",
   },
 ] as const;
+
 
 export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s1: {
@@ -415,7 +448,6 @@ function gradeLabelFromRisk(level: SubjectRiskLevel): string {
     normal: "정상",
     concern: "관심",
     watch: "주의",
-    high: "위험",
     critical: "긴급",
   };
   return m[level];
@@ -423,16 +455,10 @@ function gradeLabelFromRisk(level: SubjectRiskLevel): string {
 
 function aiScoreFromRisk(level: SubjectRiskLevel): number {
   switch (level) {
-    case "critical":
-      return 94;
-    case "high":
-      return 81;
-    case "watch":
-      return 68;
-    case "concern":
-      return 56;
-    default:
-      return 38;
+    case "critical": return 94;
+    case "watch":    return 68;
+    case "concern":  return 56;
+    default:         return 38;
   }
 }
 
@@ -531,11 +557,9 @@ function buildWireframeExtension(
       recommended:
         list.riskLevel === "critical"
           ? ["응급 연계", "현장 확인", "보호자 연락"]
-          : list.riskLevel === "high"
-            ? ["전화상담", "방문확인", "보호자 연락"]
-            : list.riskLevel === "watch"
-              ? ["방문확인", "모니터링 강화"]
-              : ["정기 점검 유지"],
+          : list.riskLevel === "watch"
+            ? ["방문확인", "모니터링 강화"]
+            : ["정기 점검 유지"],
     },
     serviceRows,
   };
@@ -581,7 +605,7 @@ const SUBJECT_WIRE_OVERRIDES: Partial<Record<string, Partial<SubjectWireframeExt
       },
     ],
     aiIntegrated: {
-      gradeLabel: "위험",
+      gradeLabel: "긴급",
       totalScore: 81,
       breakdown: { vital: 30, health: 15, emotion: 20, service: 8, isolation: 8 },
       rationale: [

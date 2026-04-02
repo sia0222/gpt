@@ -1,0 +1,12 @@
+const fs = require('fs');
+const file = process.argv[2];
+if (!file) process.exit(1);
+let content = fs.readFileSync(file, 'utf8');
+content = content.replace(/text-\[10px\]/g, 'text-[12px]');
+content = content.replace(/text-\[11px\]/g, 'text-[12px]');
+content = content.replace(/text-\[14px\]/g, 'text-[13px]');
+content = content.replace(/text-\[16px\]/g, 'text-[15px]');
+content = content.replace(/text-\[18px\]/g, 'text-[17px]');
+content = content.replace(/text-\[20px\]/g, 'text-[22px]');
+fs.writeFileSync(file, content, 'utf8');
+console.log('Fixed ' + file);

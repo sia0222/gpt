@@ -238,9 +238,9 @@ export interface ServiceUsageItem {
 export const SERVICE_USAGE_MOCK: readonly ServiceUsageItem[] = [
   { serviceName: "방문요양", enrolled: 3560, color: "bg-blue-500" },
   { serviceName: "주간보호", enrolled: 1280, color: "bg-emerald-500" },
-  { serviceName: "돌봄 SOS", enrolled: 890, color: "bg-violet-500" },
+  { serviceName: "돌봄 SOS", enrolled: 890, color: "bg-purple-500" },
   { serviceName: "전화상담", enrolled: 2100, color: "bg-amber-500" },
-  { serviceName: "활동지원", enrolled: 420, color: "bg-rose-400" },
+  { serviceName: "활동지원", enrolled: 420, color: "bg-rose-500" },
 ] as const;
 
 export const DUPLICATE_SUPPORT_WARNINGS = {

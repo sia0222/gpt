@@ -5,10 +5,10 @@ import { DASH_CONTENT_FRAME } from "@/features/admin-shell/services/dashLayoutCl
 
 export function AdminAppShell() {
   return (
-    <div className="dash-app flex min-h-screen bg-dash-canvas text-dash-foreground antialiased">
+    <div className="dash-app flex h-screen overflow-hidden bg-dash-canvas text-dash-foreground antialiased">
       <AdminSkipLinks />
       <AdminSidebar />
-      <div className="flex min-h-full min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <main
           id="main-content"
           className="flex-1 overflow-auto"

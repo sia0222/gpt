@@ -1,5 +1,44 @@
-import type { ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
+
+/** 헤더 우측 등록/액션 버튼 — 모든 페이지에서 동일한 디자인 사용 */
+export function PageHeaderAction({
+  children,
+  variant = "primary",
+  className = "",
+  ...props
+}: {
+  children: ReactNode;
+  variant?: "primary" | "secondary";
+  className?: string;
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  const base =
+    "h-10 rounded-xl px-5 text-[12px] font-extrabold transition-all flex items-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-1";
+  const variants = {
+    primary:
+      "text-white bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 shadow-sm focus:ring-zinc-500",
+    secondary:
+      "text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 shadow-sm focus:ring-zinc-300",
+  };
+  return (
+    <button
+      type="button"
+      className={[base, variants[variant], className].join(" ")}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** 헤더 액션 버튼에 쓰는 + 아이콘 */
+export function PlusIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    </svg>
+  );
+}
 
 export type PageHeaderAccent = "solid" | "gradient" | "none";
 export type PageHeaderBadgeTone = "neutral" | "danger" | "warning" | "success" | "info";
@@ -11,7 +50,7 @@ export interface PageHeaderBadge {
 }
 
 /** 페이지 경로(브레드크럼) · 페이지 타이틀(h1) 타이포는 전역 고정 */
-const PATH_CLASS = "text-[11px] font-semibold uppercase tracking-widest text-zinc-400";
+const PATH_CLASS = "text-[12px] font-semibold uppercase tracking-widest text-zinc-400";
 const TITLE_CLASS = "text-[22px] font-extrabold tracking-tight text-zinc-900 leading-tight";
 
 export interface PageHeaderProps {
@@ -87,7 +126,7 @@ export function PageHeader({
                     <span
                       key={b.key ?? `${b.label}-${i}`}
                       className={[
-                        "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        "inline-flex items-center rounded-md px-1.5 py-0.5 text-[12px] font-semibold uppercase tracking-wide",
                         BADGE_CLASS[b.tone],
                       ].join(" ")}
                     >
