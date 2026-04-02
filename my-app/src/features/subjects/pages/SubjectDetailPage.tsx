@@ -1,8 +1,9 @@
 import { Link, useParams } from "react-router-dom";
+import { PageHeader } from "@/features/admin-shell";
 import { SubjectIntegratedProfile } from "@/features/subjects/components/SubjectIntegratedProfile";
+import { SubjectDetailInfoCards } from "@/features/subjects/components/SubjectDetailInfoCards";
 import { SubjectDetailTabs } from "@/features/subjects/components/SubjectDetailTabs";
 import { getSubjectDetailMock } from "@/features/subjects/services/subjectWorkspaceMock";
-import { RISK_LABEL, riskBadgeClasses } from "@/features/subjects/utils/subjectRiskUi";
 
 export function SubjectDetailPage() {
   const { subjectId = "" } = useParams();
@@ -23,75 +24,17 @@ export function SubjectDetailPage() {
     );
   }
 
-
   return (
     <div className="flex flex-col gap-6 pb-12">
+      <PageHeader
+        eyebrow="OVERVIEW · 대상자 관리"
+        title="통합 대상자 명부"
+        backPath="/subjects"
+      />
 
-      {/* ── 간소화된 개인정보 헤더 ── */}
-      <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-[24px] font-extrabold text-zinc-900 tracking-tight">{subject.name}</h1>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className={[
-                "inline-flex rounded px-2.5 py-0.5 text-[11px] font-bold uppercase",
-                riskBadgeClasses(subject.riskLevel),
-              ].join(" ")}>
-                {RISK_LABEL[subject.riskLevel]}
-              </span>
-              <span className={[
-                "inline-flex rounded px-2.5 py-0.5 text-[11px] font-bold uppercase",
-                subject.status === "이용중" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50" : "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200",
-              ].join(" ")}>
-                {subject.status}
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex flex-col gap-2">
-            <p className="text-[14px] font-extrabold text-zinc-700 bg-zinc-50/80 px-3 py-1.5 rounded-lg border border-zinc-100 inline-block max-w-fit">
-              <span className="text-zinc-400 mr-2 font-medium tracking-wide">요약</span>
-              {subject.riskSummary}
-            </p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-medium text-zinc-600 mt-1">
-              <span className="flex items-center gap-1"><span className="text-zinc-400 text-[11px] font-bold">인적:</span> {subject.gender} · {subject.age}세</span>
-              <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-              <span className="flex items-center gap-1"><span className="text-zinc-400 text-[11px] font-bold">연락처:</span> <span className="tabnum font-semibold text-zinc-800">{subject.phone}</span></span>
-              <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-              <span className="flex items-center gap-1"><span className="text-zinc-400 text-[11px] font-bold">보호자:</span> {subject.guardian}</span>
-              <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-              <span className="flex items-center gap-1"><span className="text-zinc-400 text-[11px] font-bold">담당자:</span> {subject.caseManager}</span>
-              <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-              <span className="flex items-center gap-1"><span className="text-zinc-400 text-[11px] font-bold">구분:</span> {subject.careGrade} <span className="text-[11px] text-zinc-400 font-mono ml-1">({subject.serviceStartDate}~)</span></span>
-            </div>
-            <p className="text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
-              <svg className="w-3.5 h-3.5 text-zinc-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
-              {subject.address}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end w-full lg:w-auto">
-          <Link
-            to="/subjects"
-            className="flex h-9 w-full lg:w-auto items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 text-[12px] font-bold text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
-          >
-            목록으로
-          </Link>
-          <button
-            type="button"
-            className="flex h-9 w-full lg:w-auto items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-5 text-[12px] font-bold text-blue-700 shadow-sm transition hover:bg-blue-100"
-          >
-            보호자 연락
-          </button>
-          <button
-            type="button"
-            className="flex h-9 w-full lg:w-auto items-center justify-center rounded-lg bg-zinc-900 px-5 text-[12px] font-bold text-white shadow-sm transition hover:bg-zinc-800 active:scale-[0.98]"
-          >
-            신규 조치 등록
-          </button>
-        </div>
-      </div>
+      <section className="min-w-0" aria-labelledby="subject-detail-summary-heading">
+        <SubjectDetailInfoCards subject={subject} />
+      </section>
 
       {/* ── 2컬럼 본문 영역 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">

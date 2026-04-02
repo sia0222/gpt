@@ -36,9 +36,18 @@ export type AlertTimelineLevel = "info" | "warn" | "critical";
 export interface SubjectDetail {
   readonly id: string;
   readonly age: number;
+  readonly birthDate: string;
   readonly phone: string;
+  readonly homePhone: string;
   readonly address: string;
-  readonly guardian: string;
+  readonly householdSize: number;
+  readonly guardianName: string;
+  readonly guardianPhone: string;
+  readonly guardianRelation: string;
+  readonly disabilityGrade: string;
+  readonly dischargeScheduled: string; // "해당없음", "퇴원예정", "퇴원완료" or date
+  readonly isEndOfLife: boolean;
+  readonly isClosed: boolean;
   /** 돌봄·요양 등급 등 (목업) */
   readonly careGrade: string;
   readonly serviceStartDate: string;
@@ -191,9 +200,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s1: {
     id: "s1",
     age: 78,
+    birthDate: "1948-05-12",
     phone: "010-1234-5678",
+    homePhone: "02-123-4567",
     address: "○○구 ○○동 101-2",
-    guardian: "홍보호 (아들)",
+    householdSize: 1,
+    guardianName: "홍보호",
+    guardianPhone: "010-8888-9999",
+    guardianRelation: "아들",
+    disabilityGrade: "해당없음",
+    dischargeScheduled: "해당없음",
+    isEndOfLife: false,
+    isClosed: false,
     careGrade: "장기요양 3등급",
     serviceStartDate: "2024-06-01",
     devices: [
@@ -227,9 +245,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s2: {
     id: "s2",
     age: 82,
+    birthDate: "1944-11-20",
     phone: "010-2345-6789",
+    homePhone: "—",
     address: "△△구 △△동 32-11",
-    guardian: "김보호 (딸)",
+    householdSize: 2,
+    guardianName: "김보호",
+    guardianPhone: "010-7777-6666",
+    guardianRelation: "딸",
+    disabilityGrade: "장애 2급",
+    dischargeScheduled: "퇴원예정 (26.04.10)",
+    isEndOfLife: false,
+    isClosed: false,
     careGrade: "장기요양 2등급",
     serviceStartDate: "2023-11-10",
     devices: [
@@ -253,9 +280,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s3: {
     id: "s3",
     age: 71,
+    birthDate: "1955-03-15",
     phone: "010-3322-1100",
+    homePhone: "02-998-1234",
     address: "○○구 ○○동 78-3",
-    guardian: "이○○ (배우자)",
+    householdSize: 2,
+    guardianName: "이○○",
+    guardianPhone: "010-1111-2222",
+    guardianRelation: "배우자",
+    disabilityGrade: "해당없음",
+    dischargeScheduled: "해당없음",
+    isEndOfLife: false,
+    isClosed: false,
     careGrade: "일반 돌봄 (등급 외)",
     serviceStartDate: "2025-09-01",
     devices: [
@@ -276,9 +312,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s4: {
     id: "s4",
     age: 69,
+    birthDate: "1957-01-15",
     phone: "010-5544-8899",
+    homePhone: "—",
     address: "□□구 □□동 2단지 1204호",
-    guardian: "미등록",
+    householdSize: 1,
+    guardianName: "미등록",
+    guardianPhone: "—",
+    guardianRelation: "—",
+    disabilityGrade: "해당없음",
+    dischargeScheduled: "해당없음",
+    isEndOfLife: false,
+    isClosed: false,
     careGrade: "일시중지 (재개 검토)",
     serviceStartDate: "2024-01-15",
     devices: [
@@ -298,9 +343,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s5: {
     id: "s5",
     age: 76,
+    birthDate: "1950-02-20",
     phone: "010-6677-4455",
+    homePhone: "—",
     address: "△△구 △△동 55-1",
-    guardian: "정○○ (자녀)",
+    householdSize: 2,
+    guardianName: "정○○",
+    guardianPhone: "010-0000-0000",
+    guardianRelation: "자녀",
+    disabilityGrade: "해당없음",
+    dischargeScheduled: "해당없음",
+    isEndOfLife: false,
+    isClosed: false,
     careGrade: "돌봄 SOS 가입",
     serviceStartDate: "2025-02-20",
     devices: [
@@ -320,9 +374,18 @@ export const SUBJECT_DETAIL_MOCK: Readonly<Record<string, SubjectDetail>> = {
   s6: {
     id: "s6",
     age: 85,
+    birthDate: "1941-08-01",
     phone: "010-9988-7766",
+    homePhone: "—",
     address: "□□구 □□동 5단지 302호",
-    guardian: "송보호 (손녀)",
+    householdSize: 1,
+    guardianName: "송보호",
+    guardianPhone: "010-1234-1234",
+    guardianRelation: "손녀",
+    disabilityGrade: "장애 3급",
+    dischargeScheduled: "해당없음",
+    isEndOfLife: true,
+    isClosed: false,
     careGrade: "24h 모니터링 대상",
     serviceStartDate: "2024-08-01",
     devices: [
@@ -563,9 +626,18 @@ const SUBJECT_WIRE_OVERRIDES: Partial<Record<string, Partial<SubjectWireframeExt
 const EMPTY_DETAIL: SubjectDetail = {
   id: "",
   age: 0,
-  phone: "",
-  address: "",
-  guardian: "",
+  birthDate: "—",
+  phone: "—",
+  homePhone: "—",
+  address: "—",
+  householdSize: 1,
+  guardianName: "—",
+  guardianPhone: "—",
+  guardianRelation: "—",
+  disabilityGrade: "—",
+  dischargeScheduled: "—",
+  isEndOfLife: false,
+  isClosed: false,
   careGrade: "",
   serviceStartDate: "—",
   devices: [],
@@ -589,9 +661,14 @@ export function getSubjectDetailMock(subjectId: string): SubjectDetailView | nul
         ...EMPTY_DETAIL,
         id: subjectId,
         age: listItem.age,
+        birthDate: "1950-01-01",
         phone: "010-0000-0000",
         address: `${listItem.district} 상세주소 미등록`,
-        guardian: "보호자 미등록",
+        guardianName: "미등록",
+        guardianPhone: "—",
+        guardianRelation: "—",
+        disabilityGrade: "미등록",
+        dischargeScheduled: "해당없음",
         careGrade: "미등록",
         serviceStartDate: "—",
       };

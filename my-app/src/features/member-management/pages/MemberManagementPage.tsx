@@ -3,11 +3,7 @@ import { PageHeader } from "@/features/admin-shell";
 export function MemberManagementPage() {
   return (
     <div className="space-y-4">
-      <PageHeader
-        eyebrow="운영 관리 · 회원"
-        title="회원 관리"
-        description="운영자·직원 계정을 조회하고 권한·소속·상태를 관리합니다. (목업 데이터)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 회원 관리" title="회원 관리" />
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">운영자 계정 목록</h2>
         <table className="mt-3 w-full text-left text-sm">

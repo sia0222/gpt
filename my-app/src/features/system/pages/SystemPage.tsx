@@ -6,11 +6,7 @@ import { PageHeader } from "@/features/admin-shell";
 export function SystemPage() {
   return (
     <div className="space-y-4">
-      <PageHeader
-        eyebrow="시스템"
-        title="시스템 관리"
-        description="관리자 계정·공통 코드 등 기반 설정을 다룹니다. (목업)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 시스템 관리" title="시스템 관리" />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">관리자 계정</h2>

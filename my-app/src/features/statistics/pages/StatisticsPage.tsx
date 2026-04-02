@@ -126,11 +126,7 @@ export function StatisticsPage() {
 
   return (
     <div className="flex flex-col h-full space-y-5">
-      <PageHeader
-        eyebrow="포털 관리 · 통계"
-        title="통계 원천 데이터베이스 관리"
-        description="시각화용 대시보드 및 리포트를 구성하는 핵심 데이터셋(파이프라인)의 업로드 및 동기화 무결성을 관제합니다."
-      />
+      <PageHeader eyebrow="OVERVIEW · 통합 통계 관리" title="통합 통계 관리" />
 
       {/* KPI 3 Cards */}
       <div className="grid gap-4 md:grid-cols-3">

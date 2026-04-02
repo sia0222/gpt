@@ -13,11 +13,7 @@ export function ContentPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        eyebrow="포털 · 콘텐츠"
-        title="콘텐츠 관리"
-        description="게시판·배너·지도 카테고리 등 포털 콘텐츠 자산을 모듈 단위로 다룹니다. (UI 자리)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 콘텐츠 관리" title="콘텐츠 관리" />
       <ul className="grid gap-4 md:grid-cols-2">
         {blocks.map((b) => (
           <li

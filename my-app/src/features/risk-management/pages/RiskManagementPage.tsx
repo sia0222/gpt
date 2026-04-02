@@ -27,14 +27,8 @@ export function RiskManagementPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        eyebrow="운영 관리 · 위험 관리"
+        eyebrow="OVERVIEW · 위험 판단 기준 관리"
         title="위험 판단 기준 관리"
-        description={
-          <>
-            실시간 센서/헬스케어 데이터를 기준으로 <strong>위험 판단 룰을 작성·관리</strong>하고, 해당
-            룰을 대상자 데이터에 대입해 감지 결과를 확인합니다. (백엔드 미연동 목업)
-          </>
-        }
         badges={[
           { label: `전체 룰 ${RISK_RULES_MOCK.length}`, tone: "neutral" },
           { label: `활성 룰 ${activeRules.length}`, tone: "success" },

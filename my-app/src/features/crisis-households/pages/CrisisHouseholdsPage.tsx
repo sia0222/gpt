@@ -94,11 +94,7 @@ export function CrisisHouseholdsPage() {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <PageHeader
-        eyebrow="포털 관리 · 위기가구 처리반"
-        title="대민 제보 관제 센터"
-        description="시민들이 대민 포털을 통해 남긴 사각지대 의심 제보 목록입니다. (오직 제보내용 및 신고자 번호만 수직)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 대민 제보 관제 센터" title="대민 제보 관제 센터" />
       
       {/* 헬프데스크 (Inbox) 컨테이너 */}
       <div className="flex-1 flex rounded-2xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden min-h-[600px]">

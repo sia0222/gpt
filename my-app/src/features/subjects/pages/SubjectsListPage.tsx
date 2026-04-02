@@ -71,9 +71,8 @@ export function SubjectsListPage() {
   return (
     <div className="flex flex-col gap-6 pb-10">
       <PageHeader
-        eyebrow="SUBJECT MANAGEMENT"
+        eyebrow="OVERVIEW · 대상자 관리"
         title="통합 대상자 명부"
-        description={<p className="text-[13px] text-zinc-600 leading-relaxed">디지털 관제망에 연결된 전체 돌봄 대상자의 상태를 요약하고, <strong>위험도 높은 가구(긴급, 주의)</strong>를 우선 식별할 수 있습니다.</p>}
         aside={
           <button type="button" className="h-10 rounded-xl px-5 text-[13px] font-extrabold text-white bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 shadow-sm transition-all focus:ring-2 outline-none flex items-center justify-center gap-2 active:scale-95">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

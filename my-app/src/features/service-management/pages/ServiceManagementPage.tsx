@@ -184,9 +184,8 @@ export function ServiceManagementPage() {
   return (
     <div className="flex flex-col gap-6 pb-10">
       <PageHeader
-        eyebrow="SERVICE MANAGEMENT"
+        eyebrow="OVERVIEW · 서비스 관리 및 통제"
         title="서비스 관리 및 통제"
-        description={<p className="text-[13px] text-zinc-600 leading-relaxed">대·중·소 분류체계로 서비스 인벤토리를 관리하고, <strong>중복위험 (상충/유사/예산) 요소를 자동 점검</strong>하여 행정 과잉 지원을 사전에 방지합니다.</p>}
         aside={
           <button type="button" className="h-10 rounded-xl px-5 text-[13px] font-extrabold text-white bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all outline-none flex items-center justify-center gap-2 active:scale-95">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

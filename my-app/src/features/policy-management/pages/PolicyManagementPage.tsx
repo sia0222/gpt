@@ -56,11 +56,7 @@ export function PolicyManagementPage() {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <PageHeader
-        eyebrow="포털 관리 · 정책"
-        title="복지 정책 거버넌스 관리"
-        description="지자체 및 국가에서 하달되는 각종 복지 정책의 세부 지침과 예산 현황, 적용 대상(메타데이터)을 중앙에서 매핑하고 관리합니다."
-      />
+      <PageHeader eyebrow="OVERVIEW · 복지 정책 센터" title="복지 정책 센터" />
 
       <section className="flex flex-col rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex-1 min-h-[500px]">
         {/* 툴바 */}

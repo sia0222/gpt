@@ -12,11 +12,7 @@ const ABNORMAL = [
 export function MonitoringPage() {
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="운영 관리 · 관제"
-        title="통합 관제"
-        description="이상 대상·기기 상태를 요약해 빠르게 파악합니다. (목업, API 없음)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 통합 관제" title="통합 관제" />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">이상 대상자 목록</h2>

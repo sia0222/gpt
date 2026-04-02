@@ -6,11 +6,7 @@ import { PageHeader } from "@/features/admin-shell";
 export function OperationsPage() {
   return (
     <div className="space-y-4">
-      <PageHeader
-        eyebrow="운영 센터"
-        title="운영 관리"
-        description="알림 규칙·수신 대상·작업 이력을 통합해 봅니다. (목업)"
-      />
+      <PageHeader eyebrow="OVERVIEW · 운영 관리" title="운영 관리" />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">알림 관리</h2>

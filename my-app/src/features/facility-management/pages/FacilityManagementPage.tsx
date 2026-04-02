@@ -56,11 +56,7 @@ export function FacilityManagementPage() {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <PageHeader
-        eyebrow="포털 관리 · 시설"
-        title="관내 시설 및 인프라 매핑 센터"
-        description="관리 구역 내의 복지 거점 시설들을 등록하고 관제 지도(GIS)에 노출하기 위한 공간정보와 연락망을 관리합니다."
-      />
+      <PageHeader eyebrow="OVERVIEW · 시설 및 자원 매핑" title="시설 및 자원 매핑" />
 
       <div className="flex-1 flex gap-4 min-h-[600px] overflow-hidden">
         

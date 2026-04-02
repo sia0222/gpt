@@ -66,11 +66,7 @@ export function BoardManagementPage() {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <PageHeader
-        eyebrow="포털 관리 · 게시판"
-        title="포털 콘텐츠 보드 관리"
-        description="이용자 및 유관기관에 노출되는 공지사항, FAQ, 자료실 콘텐츠를 작성하고 관리하는 시스템(CMS)입니다."
-      />
+      <PageHeader eyebrow="OVERVIEW · 게시판 관리" title="게시판 관리" />
 
       <section className="flex flex-col rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex-1 min-h-[500px]">
         {/* 툴바 */}
